@@ -42,6 +42,7 @@ fun SettingsTabContent(viewModel: MainViewModel) {
     val context = LocalContext.current
     val app = context.applicationContext as SamFreezeApp
     val prefs = app.preferencesRepository
+    val uadListRepository = app.uadListRepository
     val scope = rememberCoroutineScope()
     val state by viewModel.state.collectAsStateWithLifecycle()
 
@@ -55,6 +56,10 @@ fun SettingsTabContent(viewModel: MainViewModel) {
 
     var importStatus by remember { mutableStateOf<String?>(null) }
     var confirmUnfreezeAll by remember { mutableStateOf(false) }
+    var uadDownloadInProgress by remember { mutableStateOf(false) }
+    var uadDownloadResult by remember { mutableStateOf<String?>(null) }
+    var uadPackageCount by remember { mutableStateOf(uadListRepository.packageCount) }
+    var uadIsFullList by remember { mutableStateOf(uadListRepository.isFullListDownloaded) }
 
     val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         if (uri != null) {
@@ -237,6 +242,43 @@ fun SettingsTabContent(viewModel: MainViewModel) {
                         colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
                         modifier = Modifier.clickable {
                             context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(UAD_REPO_URL)))
+                        }
+                    )
+                    GroupDivider()
+                    ListItem(
+                        headlineContent = { Text(stringResource(R.string.update_debloat_list)) },
+                        supportingContent = {
+                            Text(
+                                when {
+                                    uadDownloadInProgress -> stringResource(R.string.updating_list)
+                                    uadDownloadResult != null -> uadDownloadResult ?: ""
+                                    uadIsFullList -> stringResource(R.string.debloat_list_count, uadPackageCount)
+                                    else -> stringResource(R.string.debloat_list_bundled_count, uadPackageCount)
+                                }
+                            )
+                        },
+                        trailingContent = {
+                            if (uadDownloadInProgress) {
+                                CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                            }
+                        },
+                        colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+                        modifier = Modifier.clickable(enabled = !uadDownloadInProgress) {
+                            uadDownloadInProgress = true
+                            uadDownloadResult = null
+                            scope.launch {
+                                val result = uadListRepository.downloadLatest()
+                                uadDownloadInProgress = false
+                                uadDownloadResult = result.fold(
+                                    onSuccess = { count -> context.getString(R.string.debloat_list_update_success, count) },
+                                    onFailure = { context.getString(R.string.debloat_list_update_failed) }
+                                )
+                                if (result.isSuccess) {
+                                    uadPackageCount = uadListRepository.packageCount
+                                    uadIsFullList = uadListRepository.isFullListDownloaded
+                                    viewModel.loadApps()
+                                }
+                            }
                         }
                     )
                 }

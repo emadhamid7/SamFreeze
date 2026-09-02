@@ -8,7 +8,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.background
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -181,7 +180,7 @@ fun AppDetailsScreen(packageName: String, viewModel: MainViewModel, onBack: () -
             Spacer(Modifier.height(20.dp))
             DetailRow(stringResource(R.string.status), if (app.state == AppState.FROZEN) stringResource(R.string.frozen) else stringResource(R.string.active))
             DetailRow(stringResource(R.string.type), if (app.isSystemApp) stringResource(R.string.system_application) else stringResource(R.string.user_application))
-            DetailRow(stringResource(R.string.version), app.versionName ?: "—")
+            DetailRow(stringResource(R.string.version), app.versionName ?: "N/A")
             DetailRow(stringResource(R.string.uid), app.uid.toString())
             DetailRow(stringResource(R.string.currently_running), if (app.isRunning) stringResource(R.string.yes) else stringResource(R.string.no))
             (app.sizeBytes ?: localSizeBytes)?.let { DetailRow(stringResource(R.string.storage_size), formatBytes(it)) }

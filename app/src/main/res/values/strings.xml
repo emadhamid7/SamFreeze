@@ -83,18 +83,18 @@
     <string name="open_application">OPEN APPLICATION</string>
     <string name="app_info">APP INFO</string>
     <string name="force_stop">Force stop</string>
-    <string name="force_stop_disclaimer">Force stop only stops running processes. It is not the same as freezing — the app can restart itself. Use Freeze to disable it persistently.</string>
+    <string name="force_stop_disclaimer">Force stop only stops running processes. It is not the same as freezing, since the app can restart itself. Use Freeze to disable it persistently.</string>
     <string name="force_stop_confirm">This will immediately stop all running processes of this app. It is not the same as freezing.</string>
     <string name="clear_cache">CLEAR CACHE</string>
-    <string name="clear_cache_confirm">This clears only this app\'s cache files — not its data, settings, or logins. Continue?</string>
+    <string name="clear_cache_confirm">This clears only this app\'s cache files, not its data, settings, or logins. Continue?</string>
     <string name="uninstall_soft">UNINSTALL (SOFT)</string>
     <string name="uninstall_soft_disclaimer">Removes this app for the current user only. Nothing is deleted from the system partition, and it can be restored by reinstalling.</string>
     <string name="uninstall_confirm_body">This will uninstall the app for the current user. It stays recoverable via reinstall, but this goes further than freezing. Continue?</string>
 
-    <!-- Freeze levels — mirrors UAD-ng's removal-safety categories -->
+    <!-- Freeze levels, mirrors UAD-ng's removal-safety categories -->
     <string name="freeze_levels">Freeze Levels</string>
     <string name="level_recommended">Recommended</string>
-    <string name="level_recommended_desc">Safe. Widely agreed to be fine to freeze — bloat, duplicate apps, or unused OEM extras.</string>
+    <string name="level_recommended_desc">Safe. Widely agreed to be fine to freeze: bloat, duplicate apps, or unused OEM extras.</string>
     <string name="level_advanced">Advanced</string>
     <string name="level_advanced_desc">Mostly safe, but might remove a feature you actually use. Read the description first.</string>
     <string name="level_expert">Expert</string>
@@ -132,8 +132,14 @@
     <string name="community">Community</string>
     <string name="telegram_channel">Telegram</string>
     <string name="github_repo">GitHub</string>
-    <string name="uad_credit_title">Package list by UAD-ng</string>
-    <string name="uad_credit_desc">Freeze-level data and descriptions from the Universal Android Debloater Next Generation project</string>
+    <string name="uad_credit_title">Credits: UAD-NG</string>
+    <string name="uad_credit_desc">Debloat list and app descriptions from the Universal Android Debloater Next Generation project</string>
+    <string name="update_debloat_list">Update debloat list</string>
+    <string name="updating_list">Downloading the latest list…</string>
+    <string name="debloat_list_bundled_count">Using the built-in list (%1$d packages). Tap to download the full list.</string>
+    <string name="debloat_list_count">Full list downloaded, %1$d packages known</string>
+    <string name="debloat_list_update_success">Updated. %1$d packages loaded.</string>
+    <string name="debloat_list_update_failed">Couldn\'t download the list. Check your connection and try again.</string>
 
     <string name="quick_stop_list">Quick Stop List</string>
     <string name="quick_stop_list_desc">Select the apps you want to force stop, you can also use the widget to automatically force stop all selected apps in bulk.</string>
@@ -143,7 +149,7 @@
     <string name="force_stop_list_confirm">Force-stop all %1$d app(s) in your Quick Stop list?</string>
     <string name="widget_force_stop">Force Stop</string>
     <string name="widget_stopped_n">Stopped %1$d app(s)</string>
-    <string name="widget_list_empty">Quick Stop list is empty — add apps in Settings</string>
+    <string name="widget_list_empty">Quick Stop list is empty. Add apps in Settings</string>
     <string name="widget_no_root">Root not available</string>
     <string name="backup_export">Export settings backup</string>
     <string name="backup_export_desc">Saves settings and selected apps as a json file</string>
@@ -159,8 +165,8 @@
     <string name="clear_all_caches_confirm">This clears cache files for every installed app. It does not remove app data, settings, or logins. Continue?</string>
     <string name="cache_cleared">Done.</string>
     <string name="cache_cleared_amount">Freed %1$s</string>
-    <string name="cache_nothing_to_clear">Nothing to clear — caches were already empty.</string>
-    <string name="cache_clear_failed">Couldn\'t clear cache — check root access.</string>
+    <string name="cache_nothing_to_clear">Nothing to clear, caches were already empty.</string>
+    <string name="cache_clear_failed">Couldn\'t clear cache, check root access.</string>
     <string name="auto_clear_cache">Auto-clear cache</string>
     <string name="auto_clear_interval">Frequency</string>
 </resources>

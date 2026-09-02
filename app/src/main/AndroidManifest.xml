@@ -3,9 +3,14 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <!--
-        No INTERNET permission. This is intentionally an offline root utility.
-        No telemetry, no analytics, no network access of any kind.
+        This app is otherwise offline: no telemetry, no analytics, nothing
+        phones home. The one exception is INTERNET below, used solely for
+        the optional, user-initiated "Update debloat list" action in
+        Settings, which downloads the current UAD-NG package list
+        (see UadListRepository). It is never used for anything else and
+        never runs automatically in the background.
     -->
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <!-- Needed on API 33+ to enumerate all installed packages via PackageManager -->
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
@@ -62,9 +67,9 @@
         <!--
             One-tap "Force Stop" home-screen widget. Runs the Quick Stop
             list (Settings > Manage Quick Stop List) through root without
-            opening the app. Widget providers must be exported=true — this
+            opening the app. Widget providers must be exported=true, which
             is a system requirement for home-screen binding, not a network
-            surface (the app has no INTERNET permission at all).
+            surface (this widget itself never touches the network).
         -->
         <receiver
             android:name=".widget.QuickStopWidgetProvider"
