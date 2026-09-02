@@ -17,11 +17,21 @@ android {
         vectorDrawables { useSupportLibrary = true }
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file(System.getenv("KEYSTORE_FILE") ?: "release.keystore")
+            storePassword = System.getenv("KEYSTORE_PASSWORD")
+            keyAlias = System.getenv("KEY_ALIAS")
+            keyPassword = System.getenv("KEY_PASSWORD")
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.getByName("release")
         }
         debug {
             isMinifyEnabled = false
@@ -47,21 +57,6 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
-        }
-    }
-    
-    signingConfigs {
-    release {
-        storeFile file(System.getenv("KEYSTORE_FILE") ?: "release.keystore")
-        storePassword System.getenv("KEYSTORE_PASSWORD")
-        keyAlias System.getenv("KEY_ALIAS")
-        keyPassword System.getenv("KEY_PASSWORD")
-        }
-    }
-    buildTypes {
-        release {
-            signingConfig signingConfigs.release
-            minifyEnabled false
         }
     }
 }
