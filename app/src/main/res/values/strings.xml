@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SamFreeze</string>
+
+    <!-- Root -->
+    <string name="checking_root">Checking root access…</string>
+    <string name="root_access">Yay, we have root 🤝💪</string>
+    <string name="root_unavailable">Oops, no root permissions buddy 🤦🤷</string>
+    <string name="root_required_title">Root access required</string>
+    <string name="root_required_body">SamFreeze needs root access to freeze and unfreeze applications. Please grant root permission to this app in your root manager.</string>
+    <string name="try_again">TRY AGAIN</string>
+    <string name="test_root_access">Test root access</string>
+    <string name="root_test_success">Root access is working.</string>
+    <string name="root_test_failure">Root access could not be verified. Check your root manager\'s grant list.</string>
+
+    <!-- Main UI -->
+    <string name="refresh">Refresh</string>
+    <string name="settings">Settings</string>
+    <string name="search_hint">Search apps…</string>
+    <string name="filter_user">User</string>
+    <string name="filter_system">System</string>
+    <string name="filter_all">All</string>
+    <string name="filter_frozen">Frozen</string>
+    <string name="filter_selected">Selected</string>
+    <string name="loading_apps">Loading applications…</string>
+    <string name="active">ACTIVE</string>
+    <string name="frozen">FROZEN</string>
+    <string name="unknown_state">UNKNOWN</string>
+    <string name="sort_by">Sort by</string>
+    <string name="sort_name_az">Name A–Z</string>
+    <string name="sort_name_za">Name Z–A</string>
+    <string name="source_samsung">Samsung</string>
+    <string name="source_google">Google</string>
+    <string name="source_aosp">AOSP</string>
+
+    <!-- Empty states -->
+    <string name="no_apps_found">No applications found</string>
+    <string name="no_results_for">No applications match \"%1$s\"</string>
+    <string name="no_frozen_apps">No frozen applications</string>
+
+    <!-- Freeze confirmation (single app) -->
+    <string name="freeze_confirm_title">Freeze this app?</string>
+    <string name="freeze_confirm_body">%1$s will be disabled until you unfreeze it. It stays installed and its data is untouched.</string>
+    <string name="freeze_application_short">FREEZE</string>
+
+    <!-- Multi-select -->
+    <string name="n_selected">%1$d selected</string>
+    <string name="freeze_selected">FREEZE</string>
+    <string name="unfreeze_selected">UNFREEZE</string>
+    <string name="force_stop_selected">Force stop selected</string>
+    <string name="cancel">CANCEL</string>
+    <string name="processing">Processing</string>
+    <string name="processing_n_of_n">Processing %1$d of %2$d…</string>
+    <string name="batch_complete">Batch complete</string>
+    <string name="apps_processed">%1$d apps processed</string>
+    <string name="n_successful">%1$d successful</string>
+    <string name="n_failed">%1$d failed</string>
+
+    <!-- Unfreeze all -->
+    <string name="unfreeze_all">Unfreeze All</string>
+    <string name="unfreeze_all_confirm">This will unfreeze every currently frozen app. Continue?</string>
+
+    <!-- Errors -->
+    <string name="ok">OK</string>
+    <string name="close">CLOSE</string>
+    <string name="unknown_error">An unknown error occurred.</string>
+
+    <!-- App details -->
+    <string name="back">Back</string>
+    <string name="favorite">Favorite</string>
+    <string name="status">Status</string>
+    <string name="type">Type</string>
+    <string name="version">Version</string>
+    <string name="uid">UID</string>
+    <string name="currently_running">Currently running</string>
+    <string name="storage_size">Storage size</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="system_application">System application</string>
+    <string name="user_application">User application</string>
+    <string name="freeze_application">FREEZE APPLICATION</string>
+    <string name="unfreeze_application">UNFREEZE APPLICATION</string>
+    <string name="open_application">OPEN APPLICATION</string>
+    <string name="app_info">APP INFO</string>
+    <string name="force_stop">Force stop</string>
+    <string name="force_stop_disclaimer">Force stop only stops running processes. It is not the same as freezing — the app can restart itself. Use Freeze to disable it persistently.</string>
+    <string name="force_stop_confirm">This will immediately stop all running processes of this app. It is not the same as freezing.</string>
+    <string name="clear_cache">CLEAR CACHE</string>
+    <string name="clear_cache_confirm">This clears only this app\'s cache files — not its data, settings, or logins. Continue?</string>
+    <string name="uninstall_soft">UNINSTALL (SOFT)</string>
+    <string name="uninstall_soft_disclaimer">Removes this app for the current user only. Nothing is deleted from the system partition, and it can be restored by reinstalling.</string>
+    <string name="uninstall_confirm_body">This will uninstall the app for the current user. It stays recoverable via reinstall, but this goes further than freezing. Continue?</string>
+
+    <!-- Freeze levels — mirrors UAD-ng's removal-safety categories -->
+    <string name="freeze_levels">Freeze Levels</string>
+    <string name="level_recommended">Recommended</string>
+    <string name="level_recommended_desc">Safe. Widely agreed to be fine to freeze — bloat, duplicate apps, or unused OEM extras.</string>
+    <string name="level_advanced">Advanced</string>
+    <string name="level_advanced_desc">Mostly safe, but might remove a feature you actually use. Read the description first.</string>
+    <string name="level_expert">Expert</string>
+    <string name="level_expert_desc">Can break specific features (camera add-ons, carrier services, overlays). Know what you\'re doing.</string>
+    <string name="level_unsafe">Unsafe</string>
+    <string name="level_unsafe_desc">Core system packages. Freezing these can bootloop or brick your device. Avoid unless you really know why.</string>
+    <string name="level_apps_matched">%1$d installed app(s) matched</string>
+    <string name="level_no_matches">None of your installed apps are in this category.</string>
+    <string name="level_no_matches_search">No matches for \"%1$s\" in this category.</string>
+    <string name="level_description_title">About this package</string>
+    <string name="level_source">Source: %1$s</string>
+
+    <!-- Settings -->
+    <string name="appearance">Appearance</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="app_display">App display</string>
+    <string name="show_package_names">Show package names</string>
+    <string name="show_risk_dots">Show risk-level dots</string>
+    <string name="show_risk_dots_desc">Small colored dot per app: green (recommended), yellow (advanced), orange (expert), red (unsafe)</string>
+    <string name="behavior">Behavior</string>
+    <string name="confirm_before_freeze">Confirm before freezing apps</string>
+    <string name="refresh_on_resume">Refresh package state on resume</string>
+    <string name="root">Root</string>
+    <string name="root_status">Root status</string>
+    <string name="advanced_settings">Advanced settings</string>
+    <string name="enable_uninstall_option">Enable uninstall option</string>
+    <string name="enable_uninstall_desc">Uninstall apps for current user</string>
+    <string name="backup_settings">Backup settings</string>
+    <string name="bulk_actions">Bulk actions</string>
+    <string name="tab_freeze">Freeze</string>
+    <string name="tab_quick_stop">Quick Stop</string>
+
+    <string name="community">Community</string>
+    <string name="telegram_channel">Telegram</string>
+    <string name="github_repo">GitHub</string>
+    <string name="uad_credit_title">Package list by UAD-ng</string>
+    <string name="uad_credit_desc">Freeze-level data and descriptions from the Universal Android Debloater Next Generation project</string>
+
+    <string name="quick_stop_list">Quick Stop List</string>
+    <string name="quick_stop_list_desc">Select the apps you want to force stop, you can also use the widget to automatically force stop all selected apps in bulk.</string>
+    <string name="manage_quick_stop_list">Manage Quick Stop List</string>
+    <string name="n_in_quick_stop_list">%1$d in list</string>
+    <string name="force_stop_list">Force Stop</string>
+    <string name="force_stop_list_confirm">Force-stop all %1$d app(s) in your Quick Stop list?</string>
+    <string name="widget_force_stop">Force Stop</string>
+    <string name="widget_stopped_n">Stopped %1$d app(s)</string>
+    <string name="widget_list_empty">Quick Stop list is empty — add apps in Settings</string>
+    <string name="widget_no_root">Root not available</string>
+    <string name="backup_export">Export settings backup</string>
+    <string name="backup_export_desc">Saves settings and selected apps as a json file</string>
+    <string name="backup_import">Import settings backup</string>
+    <string name="backup_import_desc">Restore from a previously exported JSON file.</string>
+    <string name="import_success">Restored %1$d item(s).</string>
+    <string name="import_failed">Could not read that backup file.</string>
+
+    <!-- Cache -->
+    <string name="cache">Cache</string>
+    <string name="clear_all_caches_now">Clear all app caches now</string>
+    <string name="clear_all_caches_desc">Clears cache files for every installed app. Not their data or logins.</string>
+    <string name="clear_all_caches_confirm">This clears cache files for every installed app. It does not remove app data, settings, or logins. Continue?</string>
+    <string name="cache_cleared">Done.</string>
+    <string name="cache_cleared_amount">Freed %1$s</string>
+    <string name="cache_nothing_to_clear">Nothing to clear — caches were already empty.</string>
+    <string name="cache_clear_failed">Couldn\'t clear cache — check root access.</string>
+    <string name="auto_clear_cache">Auto-clear cache</string>
+    <string name="auto_clear_interval">Frequency</string>
+</resources>

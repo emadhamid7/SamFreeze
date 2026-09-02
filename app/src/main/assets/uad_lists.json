@@ -1,0 +1,332 @@
+{
+  "org.lineageos.jelly": {
+    "list": "Oem",
+    "description": "LineageOS Browser App, based on chromium.\nSafe to remove if you don't need it or have replaced it with another app.\nOtherwise there will be no browser app on your device.",
+    "removal": "Recommended"
+  },
+  "com.cyanogenmod.filemanager": {
+    "list": "Oem",
+    "description": "Cyanogenmod file manager, safe to remove if you use another one.",
+    "removal": "Advanced"
+  },
+  "android.ext.shared": {
+    "list": "Aosp",
+    "description": "Android Shared Library, removing may cause a bootloop.",
+    "removal": "Unsafe"
+  },
+  "com.google.android.wearable.pixel.aspen": {
+    "list": "Oem",
+    "description": "Fitbit's Connected Fitness feature for the Pixel Watch. Can be safely removed if you don't need/use it.",
+    "removal": "Advanced"
+  },
+  "org.lineageos.recorder": {
+    "list": "Oem",
+    "description": "LineageOS Voice Recorder App.\nSafe to remove if you don't need it or have replaced it with another app.",
+    "removal": "Recommended"
+  },
+  "org.lineageos.aperture": {
+    "list": "Oem",
+    "description": "LineageOS Camera App.\nSafe to remove if you've replaced it with another app.\nOtherwise there will be no camera app on your device.",
+    "removal": "Advanced"
+  },
+  "org.lineageos.etar": {
+    "list": "Oem",
+    "description": "LineageOS Calendar App.\nSafe to remove if you've replaced it with another app.\nOtherwise there will be no calendar app on your device.",
+    "removal": "Advanced"
+  },
+  "org.lineageos.glimpse": {
+    "list": "Oem",
+    "description": "LineageOS Gallery App.\nSafe to remove if you've replaced it with another app.\nOtherwise there will be no gallery app on your device.",
+    "removal": "Advanced"
+  },
+  "org.lineageos.twelve": {
+    "list": "Oem",
+    "description": "LineageOS Music App.\nSafe to remove if you don't need it or have replaced it with another app.",
+    "removal": "Recommended"
+  },
+  "org.lineageos.camelot": {
+    "list": "Oem",
+    "description": "LineageOS PDF Viewer App.\nSafe to remove if you don't need it or have replaced it with another app.",
+    "removal": "Recommended"
+  },
+  "co.aospa.dolby.xiaomi": {
+    "list": "Oem",
+    "description": "AOSPA's Dolby Atmos App on custom ROMs for Xiaomi phones. Providers support for Dolby Atmos on devices with Xiaomi hardware running custom ROMs.\nRemoving it just removes the Dolby Atmos feature and its app. Safe to remove if you don't need it.",
+    "removal": "Advanced"
+  },
+  "io.chaldeaprjkt.gamespace": {
+    "list": "Oem",
+    "description": "The Game Space App, often found in custom ROMs. If you don't need it or don't play games, it's safe to remove.",
+    "removal": "Advanced"
+  },
+  "org.omnirom.omnistyle": {
+    "list": "Oem",
+    "description": "OmniRom customization app. It lets you change the header image on the quick settings panel and the wallpaper for custom ROMs.",
+    "removal": "Expert"
+  },
+  "com.sar.main": {
+    "list": "Misc",
+    "description": "SarReduce Service (Specific Absorption Rate). This package adjusts the level of radio-frequency energy basing on where and what mode the phone is, found on Lenovo devices mostly. Absolutely not safe to remove; danger for health.",
+    "removal": "Unsafe"
+  },
+  "androidzte": {
+    "list": "Oem",
+    "description": "A framework package that powers all the system UI on ZTE, Nubia, Axon & Blade devices. Totally not safe to remove, it's as important as 'android'.",
+    "removal": "Unsafe"
+  },
+  "com.google.android.wifi.resources.overlay": {
+    "list": "Aosp",
+    "description": "A google mainline module overlay for com.android.wifi.resources, which might be useless if gms is removed. Only safe to remove if you have removed gms.",
+    "removal": "Expert"
+  },
+  "com.android.providers.partnerbrowsercustomizations": {
+    "list": "Aosp",
+    "description": "Provides browser customizations from partners (for chrome only). Total bloatware, especially useless if you use another browser than Chrome.",
+    "removal": "Recommended"
+  },
+  "com.dti.blu": {
+    "list": "Oem",
+    "description": "Preinstalled on devices made by cellphone manufacturer BLU, installs unwanted games and other non-essential stuff. Safe to remove.",
+    "removal": "Recommended"
+  },
+  "com.android.connectivity.resources": {
+    "list": "Aosp",
+    "description": "Network connectivity resources.\nCauses bootloop.",
+    "removal": "Unsafe"
+  },
+  "com.android.frameworkhwext.dark": {
+    "list": "Aosp",
+    "description": "Required components of the androidhwext. Basic functionality of Huawei Phones.",
+    "removal": "Unsafe"
+  },
+  "com.samsung.android.adaptivebrightnessgo": {
+    "list": "Oem",
+    "description": "Samsung Adaptive Brightness. Feature of Samsung devices that automatically adjusts the brightness level of display based on environmental lighting. This feature is available even after uninstalling.",
+    "removal": "Recommended"
+  },
+  "com.samsung.attvvm": {
+    "list": "Carrier",
+    "description": "Visual Voicemail. Simple GUI for voicemail.",
+    "removal": "Recommended"
+  },
+  "com.samsung.attribution": {
+    "list": "Oem",
+    "description": "Related to data collection: user attribution tracking for the Galaxy Store.",
+    "removal": "Recommended"
+  },
+  "com.sec.android.app.ewidgetatt": {
+    "list": "Carrier",
+    "description": "Entertainment Widget. AT&T Widget for OneUI.",
+    "removal": "Recommended"
+  },
+  "com.sec.omadm": {
+    "list": "Carrier",
+    "description": "OMADM. Open Mobile Alliance Device Management. A protocol for management of mobile devices.",
+    "removal": "Expert"
+  },
+  "com.sec.omadmspr.syncmlphoneif": {
+    "list": "Carrier",
+    "description": "OMADM Phone Interface. Open Mobile Alliance Device Management protocol interface for mobile device management.",
+    "removal": "Expert"
+  },
+  "com.tmobile.pr.adapt": {
+    "list": "Carrier",
+    "description": "Diagnostic tool. Can see all your installed apps, whether you allow unknown sources, and whether you're rooted, denying warranty. Constantly runs in the background.",
+    "removal": "Recommended"
+  },
+  "com.tmobile.pr.mytmobile": {
+    "list": "Carrier",
+    "description": "T-mobile account management app.",
+    "removal": "Recommended"
+  },
+  "com.tmobile.services.nameid": {
+    "list": "Carrier",
+    "description": "Name ID T-Mobile (powered by Hiya or cequint if on Samsung devices). Never trust a company which promotes call ID/spam blocking features.",
+    "removal": "Recommended"
+  },
+  "com.att.callprotect": {
+    "list": "Carrier",
+    "description": "AT&T Call Protect. Spam call blocking app provided by Hiya. Never fully trust spam blocking apps.",
+    "removal": "Recommended"
+  },
+  "com.att.myWireless": {
+    "list": "Carrier",
+    "description": "My AT&T. Lets you manage your AT&T account.",
+    "removal": "Recommended"
+  },
+  "com.verizon.mips.services": {
+    "list": "Carrier",
+    "description": "My Verizon Services. Related to My Verizon app. Required for hotspot.",
+    "removal": "Advanced"
+  },
+  "com.vzw.hss.myverizon": {
+    "list": "Carrier",
+    "description": "MyVerizon app for account management.",
+    "removal": "Recommended"
+  },
+  "com.vzw.apnlib": {
+    "list": "Carrier",
+    "description": "Library for Verizon APN. After uninstall phone won't allow calls or texts (breaks WiFi calling), and auto optimization can cause auto reboots.",
+    "removal": "Expert"
+  },
+  "com.xiaomi.market": {
+    "list": "Oem",
+    "description": "GetApps. China Mi App Store. Essential for installing the Google Play Store and updating key system applications, such as the System Launcher on some Xiaomi devices.",
+    "removal": "Advanced"
+  },
+  "com.miui.packageinstaller": {
+    "list": "Oem",
+    "description": "Package installer, hardcoded in Xiaomi China Rom. Causes bootloop on Chinese ROM when removed.",
+    "removal": "Advanced"
+  },
+  "com.miui.voiceassist": {
+    "list": "Oem",
+    "description": "Mi AI. Chinese voice assistant.",
+    "removal": "Recommended"
+  },
+  "com.mi.appfinder": {
+    "list": "Oem",
+    "description": "Needed for poco launcher search function on some HyperOS versions. Didn't break system search on tested devices otherwise. Has trackers.",
+    "removal": "Recommended"
+  },
+  "com.xiaomi.aiservice": {
+    "list": "Oem",
+    "description": "Xiaomi on-device AI inference engine (HyperOS/MIUI). Embeds Xiaomi's OneTrack SDK which collects device fingerprint, region, network type, and usage data, uploaded to tracking.*.miui.com. Removing probably breaks HyperOS AI features but not core phone/SMS/data.",
+    "removal": "Advanced"
+  },
+  "com.google.android.overlay.modules.healthfitness.forframework": {
+    "list": "Aosp",
+    "description": "Part of the health fitness system, useless for most users along with all other health fitness packages.",
+    "removal": "Recommended"
+  },
+  "com.sonyericsson.home": {
+    "list": "Oem",
+    "description": "Sony's default launcher, do not remove unless you have another launcher or you will brick your device.",
+    "removal": "Advanced"
+  },
+  "com.sonymobile.cameracommon": {
+    "list": "Oem",
+    "description": "Shared library for Sony's camera app and add-ons. Removing breaks camera functionality.",
+    "removal": "Unsafe"
+  },
+  "com.sonyericsson.settings": {
+    "list": "Oem",
+    "description": "The system settings app. Do not remove it.",
+    "removal": "Unsafe"
+  },
+  "com.motorola.livewallpaper3.prebuilt.chroma_plume": {
+    "list": "Oem",
+    "description": "Motorola prebuilt live wallpaper theme (Chroma Plume). Safe to remove.",
+    "removal": "Recommended"
+  },
+  "com.wiko.packageinstaller": {
+    "list": "Oem",
+    "description": "Provides first time app install for Wiko mobile devices.",
+    "removal": "Recommended"
+  },
+  "com.ape.cleanassist": {
+    "list": "Oem",
+    "description": "Provides junk cleaner feature for Wiko mobile devices.",
+    "removal": "Advanced"
+  },
+  "com.applovin.array.apphub.vincere": {
+    "list": "Misc",
+    "description": "AppHub. Known as a tracker company, potentially adware.",
+    "removal": "Recommended"
+  },
+  "com.customermobile.preload.vzw": {
+    "list": "Carrier",
+    "description": "Verizon Store/Retail Demo Mode. Requires a lot of permissions and downloads a remote configuration file over plain-text HTTP, leaving device configuration vulnerable.",
+    "removal": "Recommended"
+  },
+  "com.asurion.android.verizon.vms": {
+    "list": "Carrier",
+    "description": "Verizon Digital Secure. Developed by Asurion, a US company whose business is to sell insurances. All US carriers use Asurion for phone insurance.",
+    "removal": "Recommended"
+  },
+  "com.att.iqi": {
+    "list": "Carrier",
+    "description": "Carrier IQ / Device Health. Gathers, stores and forwards diagnostic measurements. Known historically as a rootkit-style data collector.",
+    "removal": "Recommended"
+  },
+  "com.att.personalcloud": {
+    "list": "Carrier",
+    "description": "AT&T Personal Cloud. Paid extra feature; data isn't end-to-end encrypted so AT&T can access it. Poorly coded historically. Not recommended to keep.",
+    "removal": "Recommended"
+  },
+  "com.wavemarket.waplauncher": {
+    "list": "Carrier",
+    "description": "AT&T Secure Family. Parental control app with multiple trackers and permissions.",
+    "removal": "Recommended"
+  },
+  "com.locationlabs.finder.sprint": {
+    "list": "Carrier",
+    "description": "Sprint Family Locator. Location Labs is owned by AVG/Avast, a company with a history of privacy concerns around selling browsing data.",
+    "removal": "Recommended"
+  },
+  "com.sprint.ms.cdm": {
+    "list": "Carrier",
+    "description": "Sprint Device Manager. Mobile Device Management (MDM) allows a company's IT department to reach inside your phone remotely. Should never be installed on a personal phone.",
+    "removal": "Recommended"
+  },
+  "com.google.android.wifi.resources.overlay.common": {
+    "list": "Aosp",
+    "description": "An overlay addition for com.android.wifi.resources, presumably Google bloat. A user reported some issues with Hotspot after removal.",
+    "removal": "Advanced"
+  },
+  "com.android.overlay.circletosearch": {
+    "list": "Aosp",
+    "description": "An overlay deeply tied with SystemUI; can cause a soft brick (all system apps crashing, inability to launch apps) on some ROM versions. Not safe to delete.",
+    "removal": "Unsafe"
+  },
+  "com.android.systemui.res.overlay_305": {
+    "list": "Oem",
+    "description": "Overlays SystemUI, best kept.",
+    "removal": "Unsafe"
+  },
+  "com.android.providers.settings.overlay": {
+    "list": "Aosp",
+    "description": "Required for com.android.providers.settings. Not safe to delete.",
+    "removal": "Unsafe"
+  },
+  "com.android.networkstack.overlay.miui": {
+    "list": "Oem",
+    "description": "Required for com.android.networkstack on devices running HyperOS/MIUI. Not safe to delete.",
+    "removal": "Unsafe"
+  },
+  "com.android.carrierconfig.overlay.miui": {
+    "list": "Oem",
+    "description": "Required for com.android.carrierconfig on devices running HyperOS/MIUI. Safe to remove if com.android.carrierconfig is removed.",
+    "removal": "Advanced"
+  },
+  "com.google.android.overlay.setupwizard": {
+    "list": "Aosp",
+    "description": "An overlay for com.google.android.setupwizard. Safe to remove if com.google.android.setupwizard has been removed.",
+    "removal": "Advanced"
+  },
+  "com.miui.euicc": {
+    "list": "Oem",
+    "description": "The LPA app constantly running in background, consuming RAM and battery. Core of eSIM services on Xiaomi devices. No issues found after removal if you don't use an eSIM.",
+    "removal": "Advanced"
+  },
+  "com.miui.cotaservice": {
+    "list": "Oem",
+    "description": "MIUI's COTA (Configuration Over-The-Air) service. Constantly connects to the web sending/receiving data from an unknown source. Might cause obscure issues with telephony and Xiaomi services.",
+    "removal": "Advanced"
+  },
+  "com.xiaomi.aicr": {
+    "list": "Oem",
+    "description": "Mi AI Engine. Might break the ability to set wallpapers on some devices.",
+    "removal": "Advanced"
+  },
+  "com.miui.contentcatcher": {
+    "list": "Oem",
+    "description": "Application Extension Service. A password manager in settings, requires Mi Account to autofill and syncs to your account.",
+    "removal": "Recommended"
+  },
+  "com.miui.misightservice": {
+    "list": "Oem",
+    "description": "Telemetry and diagnostics collector app that sends analytics to Xiaomi servers, with almost no use for the user. Worth removing.",
+    "removal": "Recommended"
+  }
+}
