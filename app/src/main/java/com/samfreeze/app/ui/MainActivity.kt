@@ -651,7 +651,7 @@ private fun AppRow(
                 Spacer(Modifier.width(4.dp))
             }
 
-            AppIcon(icon)
+            AppIcon(icon, riskColor = if (showRiskDots) app.uadInfo?.let { com.samfreeze.app.ui.theme.riskColorFor(it.freezeLevel) } else null)
             Spacer(Modifier.width(12.dp))
 
             Column(modifier = Modifier.weight(1f)) {

@@ -32,6 +32,7 @@ private const val REPO_URL = "https://github.com/emadhamid7/SamFreeze"
 private const val TELEGRAM_URL = "https://t.me/Samfreeze"
 private const val GITHUB_PROFILE_URL = "https://github.com/emadhamid7"
 private const val UAD_REPO_URL = "https://github.com/Universal-Debloater-Alliance/universal-android-debloater-next-generation"
+private const val CLAUDE_URL = "https://claude.ai"
 
 /**
  * Settings now lives as a tab in MainScreen (same as Freeze / Quick Stop)
@@ -313,27 +314,54 @@ fun SettingsTabContent(viewModel: MainViewModel) {
             ) {
                 Column(modifier = Modifier.padding(24.dp)) {
                     Text(
-                        stringResource(R.string.uad_credit_title),
+                        stringResource(R.string.credits_header),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.SemiBold
                     )
-                    Spacer(Modifier.height(10.dp))
-                    Text(
-                        stringResource(R.string.uad_credit_desc),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    Spacer(Modifier.height(16.dp))
+
+                    CreditEntry(
+                        name = stringResource(R.string.credit_emad_name),
+                        role = stringResource(R.string.credit_emad_role),
+                        onClick = {
+                            showCreditsDialog = false
+                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(GITHUB_PROFILE_URL)))
+                        }
                     )
-                    Spacer(Modifier.height(20.dp))
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                        TextButton(onClick = {
+                    Spacer(Modifier.height(14.dp))
+                    CreditEntry(
+                        name = stringResource(R.string.credit_uad_name),
+                        role = stringResource(R.string.credit_uad_role),
+                        onClick = {
                             showCreditsDialog = false
                             context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(UAD_REPO_URL)))
-                        }) { Text(stringResource(R.string.view_on_github)) }
+                        }
+                    )
+                    Spacer(Modifier.height(14.dp))
+                    CreditEntry(
+                        name = stringResource(R.string.credit_claude_name),
+                        role = stringResource(R.string.credit_claude_role),
+                        onClick = {
+                            showCreditsDialog = false
+                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(CLAUDE_URL)))
+                        }
+                    )
+
+                    Spacer(Modifier.height(20.dp))
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                         TextButton(onClick = { showCreditsDialog = false }) { Text(stringResource(R.string.ok)) }
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun CreditEntry(name: String, role: String, onClick: () -> Unit) {
+    Column(modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)) {
+        Text(name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Medium)
+        Text(role, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

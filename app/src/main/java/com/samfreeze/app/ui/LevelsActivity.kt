@@ -5,13 +5,12 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -113,68 +112,80 @@ fun LevelsScreen(viewModel: MainViewModel, onBack: () -> Unit) {
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text(stringResource(R.string.freeze_levels), style = MaterialTheme.typography.titleMedium) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.back))
-                    }
-                },
-                actions = {
-                    IconButton(
-                        enabled = !uadDownloadInProgress,
-                        onClick = {
-                            uadDownloadInProgress = true
-                            uadDownloadResult = null
-                            scope.launch {
-                                val result = app.uadListRepository.downloadLatest()
-                                uadDownloadInProgress = false
-                                uadDownloadResult = result.fold(
-                                    onSuccess = { count -> context.getString(R.string.debloat_list_update_success, count) },
-                                    onFailure = { context.getString(R.string.debloat_list_update_failed) }
+            Surface(
+                shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp),
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 2.dp
+            ) {
+                Column(modifier = Modifier.statusBarsPadding()) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 4.dp, end = 16.dp, top = 6.dp, bottom = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.back))
+                        }
+                        Text(
+                            stringResource(R.string.freeze_levels),
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Button(
+                            enabled = !uadDownloadInProgress,
+                            shape = RoundedCornerShape(50),
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
+                            onClick = {
+                                uadDownloadInProgress = true
+                                uadDownloadResult = null
+                                scope.launch {
+                                    val result = app.uadListRepository.downloadLatest()
+                                    uadDownloadInProgress = false
+                                    uadDownloadResult = result.fold(
+                                        onSuccess = { count -> context.getString(R.string.debloat_list_update_success, count) },
+                                        onFailure = { context.getString(R.string.debloat_list_update_failed) }
+                                    )
+                                    if (result.isSuccess) viewModel.loadApps()
+                                    android.widget.Toast.makeText(context, uadDownloadResult, android.widget.Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        ) {
+                            if (uadDownloadInProgress) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    strokeWidth = 2.dp,
+                                    color = MaterialTheme.colorScheme.onPrimary
                                 )
-                                if (result.isSuccess) viewModel.loadApps()
-                                android.widget.Toast.makeText(context, uadDownloadResult, android.widget.Toast.LENGTH_SHORT).show()
+                            } else {
+                                Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(Modifier.width(6.dp))
+                                Text(stringResource(R.string.update_debloat_list_short), style = MaterialTheme.typography.labelLarge)
                             }
                         }
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        if (uadDownloadInProgress) {
-                            CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-                        } else {
-                            Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.update_debloat_list))
+                        tabs.forEachIndexed { index, tab ->
+                            LevelTabPill(
+                                title = tab.title,
+                                dotColor = riskColorFor(tab.level),
+                                selected = selectedTabIndex == index,
+                                onClick = { selectedTabIndex = index },
+                                modifier = Modifier.weight(1f)
+                            )
                         }
                     }
-                },
-                windowInsets = WindowInsets(0, 0, 0, 0),
-                modifier = Modifier.height(52.dp)
-            )
+                }
+            }
         }
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp, vertical = 10.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                tabs.forEachIndexed { index, tab ->
-                    FilterChip(
-                        selected = selectedTabIndex == index,
-                        onClick = { selectedTabIndex = index },
-                        label = { Text(tab.title) },
-                        leadingIcon = {
-                            Box(
-                                modifier = Modifier
-                                    .size(8.dp)
-                                    .clip(RoundedCornerShape(50))
-                                    .background(riskColorFor(tab.level))
-                            )
-                        }
-                    )
-                }
-            }
-
             Text(
                 selectedTab.description,
                 style = MaterialTheme.typography.bodySmall,
@@ -293,6 +304,43 @@ fun LevelsScreen(viewModel: MainViewModel, onBack: () -> Unit) {
             },
             confirmButton = { TextButton(onClick = { viewModel.clearBatchResult() }) { Text(stringResource(R.string.ok)) } }
         )
+    }
+}
+
+@Composable
+private fun LevelTabPill(
+    title: String,
+    dotColor: androidx.compose.ui.graphics.Color,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier.clip(RoundedCornerShape(50)).clickable(onClick = onClick),
+        shape = RoundedCornerShape(50),
+        color = if (selected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+        border = if (selected) null else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(7.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background(dotColor)
+            )
+            Spacer(Modifier.width(5.dp))
+            Text(
+                title,
+                style = MaterialTheme.typography.labelMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                softWrap = false
+            )
+        }
     }
 }
 
