@@ -8,12 +8,16 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -34,6 +38,7 @@ import com.samfreeze.app.model.AppState
 import com.samfreeze.app.model.FreezeLevel
 import com.samfreeze.app.ui.theme.SamFreezeTheme
 import com.samfreeze.app.ui.theme.riskColorFor
+import kotlinx.coroutines.launch
 
 class LevelsActivity : ComponentActivity() {
 
@@ -67,6 +72,14 @@ private data class LevelTabInfo(
     val description: String
 )
 
+@Composable
+private fun levelTabLabel(level: FreezeLevel): String = when (level) {
+    FreezeLevel.RECOMMENDED -> stringResource(R.string.level_recommended)
+    FreezeLevel.ADVANCED -> stringResource(R.string.level_advanced)
+    FreezeLevel.EXPERT -> stringResource(R.string.level_expert)
+    FreezeLevel.UNSAFE -> stringResource(R.string.level_unsafe)
+}
+
 /**
  * Freeze Levels screen: each tab is one of UAD-ng's removal-safety
  * categories. The apps shown are computed on the fly by cross-referencing
@@ -89,44 +102,74 @@ fun LevelsScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         LevelTabInfo(FreezeLevel.UNSAFE, stringResource(R.string.level_unsafe), stringResource(R.string.level_unsafe_desc))
     )
     var selectedTabIndex by remember { mutableStateOf(0) }
-    var query by remember { mutableStateOf("") }
     var descriptionApp by remember { mutableStateOf<AppInfo?>(null) }
+    var uadDownloadInProgress by remember { mutableStateOf(false) }
+    var uadDownloadResult by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
 
     val selectedTab = tabs[selectedTabIndex]
     val appsForLevel = remember(state.apps, selectedTab.level) { viewModel.appsForLevel(selectedTab.level) }
-    val visible = if (query.isBlank()) appsForLevel else appsForLevel.filter {
-        it.label.contains(query, ignoreCase = true) || it.packageName.contains(query, ignoreCase = true)
-    }
+    val visible = appsForLevel
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.freeze_levels)) },
+            CenterAlignedTopAppBar(
+                title = { Text(stringResource(R.string.freeze_levels), style = MaterialTheme.typography.titleMedium) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
-                }
+                },
+                actions = {
+                    IconButton(
+                        enabled = !uadDownloadInProgress,
+                        onClick = {
+                            uadDownloadInProgress = true
+                            uadDownloadResult = null
+                            scope.launch {
+                                val result = app.uadListRepository.downloadLatest()
+                                uadDownloadInProgress = false
+                                uadDownloadResult = result.fold(
+                                    onSuccess = { count -> context.getString(R.string.debloat_list_update_success, count) },
+                                    onFailure = { context.getString(R.string.debloat_list_update_failed) }
+                                )
+                                if (result.isSuccess) viewModel.loadApps()
+                                android.widget.Toast.makeText(context, uadDownloadResult, android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    ) {
+                        if (uadDownloadInProgress) {
+                            CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                        } else {
+                            Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.update_debloat_list))
+                        }
+                    }
+                },
+                windowInsets = WindowInsets(0, 0, 0, 0),
+                modifier = Modifier.height(52.dp)
             )
         }
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize()) {
-            ScrollableTabRow(selectedTabIndex = selectedTabIndex, edgePadding = 12.dp) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 tabs.forEachIndexed { index, tab ->
-                    Tab(
+                    FilterChip(
                         selected = selectedTabIndex == index,
                         onClick = { selectedTabIndex = index },
-                        text = {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(8.dp)
-                                        .clip(RoundedCornerShape(50))
-                                        .background(riskColorFor(tab.level))
-                                )
-                                Spacer(Modifier.width(6.dp))
-                                Text(tab.title)
-                            }
+                        label = { Text(tab.title) },
+                        leadingIcon = {
+                            Box(
+                                modifier = Modifier
+                                    .size(8.dp)
+                                    .clip(RoundedCornerShape(50))
+                                    .background(riskColorFor(tab.level))
+                            )
                         }
                     )
                 }
@@ -136,15 +179,7 @@ fun LevelsScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 selectedTab.description,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-            )
-
-            OutlinedTextField(
-                value = query,
-                onValueChange = { query = it },
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                singleLine = true,
-                placeholder = { Text(stringResource(R.string.search_hint)) }
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
             )
 
             Text(
@@ -157,8 +192,7 @@ fun LevelsScreen(viewModel: MainViewModel, onBack: () -> Unit) {
             if (visible.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
-                        if (query.isBlank()) stringResource(R.string.level_no_matches)
-                        else stringResource(R.string.level_no_matches_search, query),
+                        stringResource(R.string.level_no_matches),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(32.dp)
                     )
@@ -180,6 +214,7 @@ fun LevelsScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                     }
                     item { Spacer(Modifier.height(24.dp)) }
                 }
+
             }
         }
     }
@@ -192,13 +227,37 @@ fun LevelsScreen(viewModel: MainViewModel, onBack: () -> Unit) {
             text = {
                 Column {
                     if (info != null) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(8.dp)
+                                    .clip(RoundedCornerShape(50))
+                                    .background(riskColorFor(info.freezeLevel))
+                            )
+                            Spacer(Modifier.width(6.dp))
+                            Text(
+                                levelTabLabel(info.freezeLevel),
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                        Spacer(Modifier.height(4.dp))
                         Text(
                             stringResource(R.string.level_source, info.list),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.outline
                         )
-                        Spacer(Modifier.height(8.dp))
-                        Text(info.description.ifBlank { stringResource(R.string.level_description_title) })
+                        if (info.description.isNotBlank()) {
+                            Spacer(Modifier.height(12.dp))
+                            Text(
+                                stringResource(R.string.level_description_title),
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(info.description)
+                        }
                     }
                 }
             },

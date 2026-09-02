@@ -20,6 +20,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.samfreeze.app.R
 import com.samfreeze.app.SamFreezeApp
@@ -42,7 +43,6 @@ fun SettingsTabContent(viewModel: MainViewModel) {
     val context = LocalContext.current
     val app = context.applicationContext as SamFreezeApp
     val prefs = app.preferencesRepository
-    val uadListRepository = app.uadListRepository
     val scope = rememberCoroutineScope()
     val state by viewModel.state.collectAsStateWithLifecycle()
 
@@ -56,10 +56,7 @@ fun SettingsTabContent(viewModel: MainViewModel) {
 
     var importStatus by remember { mutableStateOf<String?>(null) }
     var confirmUnfreezeAll by remember { mutableStateOf(false) }
-    var uadDownloadInProgress by remember { mutableStateOf(false) }
-    var uadDownloadResult by remember { mutableStateOf<String?>(null) }
-    var uadPackageCount by remember { mutableStateOf(uadListRepository.packageCount) }
-    var uadIsFullList by remember { mutableStateOf(uadListRepository.isFullListDownloaded) }
+    var showCreditsDialog by remember { mutableStateOf(false) }
 
     val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         if (uri != null) {
@@ -133,7 +130,6 @@ fun SettingsTabContent(viewModel: MainViewModel) {
                     GroupDivider()
                     SwitchRow(
                         title = stringResource(R.string.show_risk_dots),
-                        subtitle = stringResource(R.string.show_risk_dots_desc),
                         checked = showRiskDots,
                         onCheckedChange = { scope.launch { prefs.setShowRiskDots(it) } }
                     )
@@ -235,52 +231,6 @@ fun SettingsTabContent(viewModel: MainViewModel) {
                             context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(TELEGRAM_URL)))
                         }
                     )
-                    GroupDivider()
-                    ListItem(
-                        headlineContent = { Text(stringResource(R.string.uad_credit_title)) },
-                        supportingContent = { Text(stringResource(R.string.uad_credit_desc)) },
-                        colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
-                        modifier = Modifier.clickable {
-                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(UAD_REPO_URL)))
-                        }
-                    )
-                    GroupDivider()
-                    ListItem(
-                        headlineContent = { Text(stringResource(R.string.update_debloat_list)) },
-                        supportingContent = {
-                            Text(
-                                when {
-                                    uadDownloadInProgress -> stringResource(R.string.updating_list)
-                                    uadDownloadResult != null -> uadDownloadResult ?: ""
-                                    uadIsFullList -> stringResource(R.string.debloat_list_count, uadPackageCount)
-                                    else -> stringResource(R.string.debloat_list_bundled_count, uadPackageCount)
-                                }
-                            )
-                        },
-                        trailingContent = {
-                            if (uadDownloadInProgress) {
-                                CircularProgressIndicator(modifier = Modifier.size(20.dp))
-                            }
-                        },
-                        colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
-                        modifier = Modifier.clickable(enabled = !uadDownloadInProgress) {
-                            uadDownloadInProgress = true
-                            uadDownloadResult = null
-                            scope.launch {
-                                val result = uadListRepository.downloadLatest()
-                                uadDownloadInProgress = false
-                                uadDownloadResult = result.fold(
-                                    onSuccess = { count -> context.getString(R.string.debloat_list_update_success, count) },
-                                    onFailure = { context.getString(R.string.debloat_list_update_failed) }
-                                )
-                                if (result.isSuccess) {
-                                    uadPackageCount = uadListRepository.packageCount
-                                    uadIsFullList = uadListRepository.isFullListDownloaded
-                                    viewModel.loadApps()
-                                }
-                            }
-                        }
-                    )
                 }
             }
 
@@ -306,6 +256,18 @@ fun SettingsTabContent(viewModel: MainViewModel) {
                             }
                         },
                         colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent)
+                    )
+                }
+            }
+
+            item { SectionHeader(stringResource(R.string.credits)) }
+            item {
+                SettingsGroup {
+                    ListItem(
+                        headlineContent = { Text(stringResource(R.string.credits)) },
+                        supportingContent = { Text(stringResource(R.string.credits_subtitle)) },
+                        colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+                        modifier = Modifier.clickable { showCreditsDialog = true }
                     )
                 }
             }
@@ -340,6 +302,38 @@ fun SettingsTabContent(viewModel: MainViewModel) {
             },
             dismissButton = { TextButton(onClick = { confirmUnfreezeAll = false }) { Text(stringResource(R.string.cancel)) } }
         )
+    }
+
+    if (showCreditsDialog) {
+        Dialog(onDismissRequest = { showCreditsDialog = false }) {
+            Surface(
+                shape = RoundedCornerShape(24.dp),
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 3.dp
+            ) {
+                Column(modifier = Modifier.padding(24.dp)) {
+                    Text(
+                        stringResource(R.string.uad_credit_title),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    Text(
+                        stringResource(R.string.uad_credit_desc),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(20.dp))
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                        TextButton(onClick = {
+                            showCreditsDialog = false
+                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(UAD_REPO_URL)))
+                        }) { Text(stringResource(R.string.view_on_github)) }
+                        TextButton(onClick = { showCreditsDialog = false }) { Text(stringResource(R.string.ok)) }
+                    }
+                }
+            }
+        }
     }
 }
 

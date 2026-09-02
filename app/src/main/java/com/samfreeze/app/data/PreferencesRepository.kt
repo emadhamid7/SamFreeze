@@ -27,6 +27,7 @@ class PreferencesRepository(private val context: Context) {
         val THEME = stringPreferencesKey("theme") // "system" | "light" | "dark"
         val SHOW_PACKAGE_NAMES = booleanPreferencesKey("show_package_names")
         val SHOW_RISK_DOTS = booleanPreferencesKey("show_risk_dots")
+        val UAD_AUTO_DOWNLOAD_DONE = booleanPreferencesKey("uad_auto_download_done")
         val CONFIRM_BEFORE_FREEZE = booleanPreferencesKey("confirm_before_freeze")
         val REFRESH_ON_RESUME = booleanPreferencesKey("refresh_on_resume")
         val ADVANCED_UNINSTALL_ENABLED = booleanPreferencesKey("advanced_uninstall_enabled")
@@ -62,6 +63,17 @@ class PreferencesRepository(private val context: Context) {
     val showRiskDots: Flow<Boolean> = context.dataStore.data.map { it[Keys.SHOW_RISK_DOTS] ?: true }
     suspend fun setShowRiskDots(value: Boolean) {
         context.dataStore.edit { it[Keys.SHOW_RISK_DOTS] = value }
+    }
+
+    /**
+     * True once the one-time automatic first-install download of the full
+     * UAD-NG debloat list has succeeded. Only ever set on success, so if
+     * the device had no internet at install time, it's simply retried the
+     * next time the app runs, with no extra network access after that.
+     */
+    val uadAutoDownloadDone: Flow<Boolean> = context.dataStore.data.map { it[Keys.UAD_AUTO_DOWNLOAD_DONE] ?: false }
+    suspend fun setUadAutoDownloadDone(value: Boolean) {
+        context.dataStore.edit { it[Keys.UAD_AUTO_DOWNLOAD_DONE] = value }
     }
 
     /** Default OFF — the user asked for this to work, but not nag by default. */

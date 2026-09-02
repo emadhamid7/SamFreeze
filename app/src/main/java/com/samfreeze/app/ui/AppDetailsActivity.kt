@@ -8,7 +8,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.background
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -171,7 +170,14 @@ fun AppDetailsScreen(packageName: String, viewModel: MainViewModel, onBack: () -
                             )
                         }
                         if (info.description.isNotBlank()) {
-                            Spacer(Modifier.height(6.dp))
+                            Spacer(Modifier.height(10.dp))
+                            Text(
+                                stringResource(R.string.level_description_title),
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(Modifier.height(4.dp))
                             Text(info.description, style = MaterialTheme.typography.bodyMedium)
                         }
                     }

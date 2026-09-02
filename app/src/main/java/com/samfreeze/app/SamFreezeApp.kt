@@ -6,6 +6,11 @@ import com.samfreeze.app.data.PreferencesRepository
 import com.samfreeze.app.data.StatsRepository
 import com.samfreeze.app.data.UadListRepository
 import com.samfreeze.app.root.RootShell
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 class SamFreezeApp : Application() {
 
@@ -20,6 +25,8 @@ class SamFreezeApp : Application() {
     lateinit var uadListRepository: UadListRepository
         private set
 
+    private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
     override fun onCreate() {
         super.onCreate()
         rootShell = RootShell.getInstance()
@@ -27,5 +34,18 @@ class SamFreezeApp : Application() {
         preferencesRepository = PreferencesRepository(applicationContext)
         statsRepository = StatsRepository(rootShell)
         uadListRepository = UadListRepository(applicationContext)
+
+        // One-time, first-install-only download of the full UAD-NG debloat
+        // list. Only ever runs until it succeeds once — no periodic or
+        // background refreshing after that. Any further updates are
+        // strictly user-initiated from the Freeze Levels screen.
+        appScope.launch {
+            if (!preferencesRepository.uadAutoDownloadDone.first()) {
+                val result = uadListRepository.downloadLatest()
+                if (result.isSuccess) {
+                    preferencesRepository.setUadAutoDownloadDone(true)
+                }
+            }
+        }
     }
 }

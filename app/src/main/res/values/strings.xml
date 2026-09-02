@@ -103,8 +103,7 @@
     <string name="level_unsafe_desc">Core system packages. Freezing these can bootloop or brick your device. Avoid unless you really know why.</string>
     <string name="level_apps_matched">%1$d installed app(s) matched</string>
     <string name="level_no_matches">None of your installed apps are in this category.</string>
-    <string name="level_no_matches_search">No matches for \"%1$s\" in this category.</string>
-    <string name="level_description_title">About this package</string>
+    <string name="level_description_title">Description:</string>
     <string name="level_source">Source: %1$s</string>
 
     <!-- Settings -->
@@ -115,7 +114,6 @@
     <string name="app_display">App display</string>
     <string name="show_package_names">Show package names</string>
     <string name="show_risk_dots">Show risk-level dots</string>
-    <string name="show_risk_dots_desc">Small colored dot per app: green (recommended), yellow (advanced), orange (expert), red (unsafe)</string>
     <string name="behavior">Behavior</string>
     <string name="confirm_before_freeze">Confirm before freezing apps</string>
     <string name="refresh_on_resume">Refresh package state on resume</string>
@@ -134,11 +132,14 @@
     <string name="github_repo">GitHub</string>
     <string name="uad_credit_title">Credits: UAD-NG</string>
     <string name="uad_credit_desc">Debloat list and app descriptions from the Universal Android Debloater Next Generation project</string>
+    <string name="credits">Credits</string>
+    <string name="credits_subtitle">Open source projects that make this app possible</string>
+    <string name="view_on_github">View on GitHub</string>
     <string name="update_debloat_list">Update debloat list</string>
     <string name="updating_list">Downloading the latest list…</string>
-    <string name="debloat_list_bundled_count">Using the built-in list (%1$d packages). Tap to download the full list.</string>
-    <string name="debloat_list_count">Full list downloaded, %1$d packages known</string>
-    <string name="debloat_list_update_success">Updated. %1$d packages loaded.</string>
+    <string name="debloat_list_bundled_count">Built-in list, %1$d packages</string>
+    <string name="debloat_list_count">%1$d packages known</string>
+    <string name="debloat_list_update_success">Updated, %1$d packages loaded</string>
     <string name="debloat_list_update_failed">Couldn\'t download the list. Check your connection and try again.</string>
 
     <string name="quick_stop_list">Quick Stop List</string>
