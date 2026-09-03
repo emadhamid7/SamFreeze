@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- No backup rules needed: android:allowBackup is false. Kept as a stub
+     in case a ROM build later chooses to enable backups selectively. -->
+<full-backup-content>
+</full-backup-content>

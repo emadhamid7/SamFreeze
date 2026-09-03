@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+        This app is otherwise offline: no telemetry, no analytics, nothing
+        phones home. The one exception is INTERNET below, used solely for
+        the optional, user-initiated "Update debloat list" action in
+        Settings, which downloads the current UAD-NG package list
+        (see UadListRepository). It is never used for anything else and
+        never runs automatically in the background.
+    -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Needed on API 33+ to enumerate all installed packages via PackageManager -->
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
+
+    <!-- Optional: only used if the user enables "apply profile after boot" -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <application
+        android:name=".SamFreezeApp"
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.SamFreeze"
+        android:enableOnBackInvokedCallback="true">
+
+        <activity
+            android:name=".ui.MainActivity"
+            android:exported="true"
+            android:theme="@style/Theme.SamFreeze">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".ui.LevelsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.SamFreeze" />
+
+        <activity
+            android:name=".ui.AppDetailsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.SamFreeze" />
+
+        <!--
+            Boot receiver is registered but does nothing unless the user has
+            explicitly enabled "apply profile after boot" in Settings. See
+            BootCompletedReceiver for the guard check. Disabled by default.
+        -->
+        <receiver
+            android:name=".root.BootCompletedReceiver"
+            android:exported="true"
+            android:enabled="true"
+            android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <!--
+            One-tap "Force Stop" home-screen widget. Runs the Quick Stop
+            list (Settings > Manage Quick Stop List) through root without
+            opening the app. Widget providers must be exported=true, which
+            is a system requirement for home-screen binding, not a network
+            surface (this widget itself never touches the network).
+        -->
+        <receiver
+            android:name=".widget.QuickStopWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_force_stop">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.samfreeze.app.widget.ACTION_FORCE_STOP" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/quick_stop_widget_info" />
+        </receiver>
+
+    </application>
+</manifest>
