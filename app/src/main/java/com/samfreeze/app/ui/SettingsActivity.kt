@@ -34,6 +34,12 @@ private const val GITHUB_PROFILE_URL = "https://github.com/emadhamid7"
 private const val UAD_REPO_URL = "https://github.com/Universal-Debloater-Alliance/universal-android-debloater-next-generation"
 private const val CLAUDE_URL = "https://claude.ai"
 
+// Shared layout constants so every card/row in Settings has identical
+// margins, corner radius, and height — pure visual rhythm, no behavior here.
+private val SettingsHorizontalMargin = 20.dp
+private val SettingsCardCorner = 22.dp
+private val SettingsRowMinHeight = 56.dp
+
 /**
  * Settings now lives as a tab in MainScreen (same as Freeze / Quick Stop)
  * instead of its own Activity, so the bottom nav stays visible and the
@@ -161,14 +167,18 @@ fun SettingsTabContent(viewModel: MainViewModel) {
                         headlineContent = { Text(stringResource(R.string.backup_export)) },
                         supportingContent = { Text(stringResource(R.string.backup_export_desc)) },
                         colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
-                        modifier = Modifier.clickable { exportLauncher.launch("samfreeze-backup.json") }
+                        modifier = Modifier
+                            .defaultMinSize(minHeight = SettingsRowMinHeight)
+                            .clickable { exportLauncher.launch("samfreeze-backup.json") }
                     )
                     GroupDivider()
                     ListItem(
                         headlineContent = { Text(stringResource(R.string.backup_import)) },
                         supportingContent = { Text(importStatus ?: stringResource(R.string.backup_import_desc)) },
                         colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
-                        modifier = Modifier.clickable { importLauncher.launch(arrayOf("application/json")) }
+                        modifier = Modifier
+                            .defaultMinSize(minHeight = SettingsRowMinHeight)
+                            .clickable { importLauncher.launch(arrayOf("application/json")) }
                     )
                 }
             }
@@ -187,10 +197,10 @@ fun SettingsTabContent(viewModel: MainViewModel) {
             item { SectionHeader(stringResource(R.string.bulk_actions)) }
             item {
                 SettingsGroup {
-                    Column(modifier = Modifier.padding(16.dp)) {
+                    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
                         Button(
                             onClick = { confirmUnfreezeAll = true },
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 48.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.errorContainer,
                                 contentColor = MaterialTheme.colorScheme.onErrorContainer
@@ -223,7 +233,8 @@ fun SettingsTabContent(viewModel: MainViewModel) {
                                 CircularProgressIndicator(modifier = Modifier.size(20.dp))
                             }
                         },
-                        colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent)
+                        colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+                        modifier = Modifier.defaultMinSize(minHeight = SettingsRowMinHeight)
                     )
                 }
             }
@@ -240,9 +251,11 @@ fun SettingsTabContent(viewModel: MainViewModel) {
                             )
                         },
                         colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
-                        modifier = Modifier.clickable {
-                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(REPO_URL)))
-                        }
+                        modifier = Modifier
+                            .defaultMinSize(minHeight = SettingsRowMinHeight)
+                            .clickable {
+                                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(REPO_URL)))
+                            }
                     )
                     GroupDivider()
                     ListItem(
@@ -254,9 +267,11 @@ fun SettingsTabContent(viewModel: MainViewModel) {
                             )
                         },
                         colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
-                        modifier = Modifier.clickable {
-                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(TELEGRAM_URL)))
-                        }
+                        modifier = Modifier
+                            .defaultMinSize(minHeight = SettingsRowMinHeight)
+                            .clickable {
+                                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(TELEGRAM_URL)))
+                            }
                     )
                 }
             }
@@ -268,12 +283,14 @@ fun SettingsTabContent(viewModel: MainViewModel) {
                         headlineContent = { Text(stringResource(R.string.credits)) },
                         supportingContent = { Text(stringResource(R.string.credits_subtitle)) },
                         colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
-                        modifier = Modifier.clickable { showCreditsDialog = true }
+                        modifier = Modifier
+                            .defaultMinSize(minHeight = SettingsRowMinHeight)
+                            .clickable { showCreditsDialog = true }
                     )
                 }
             }
 
-            item { Spacer(Modifier.height(24.dp)) }
+            item { Spacer(Modifier.height(20.dp)) }
             item {
                 Text(
                     "Made with 🤍 by Emad",
@@ -282,7 +299,7 @@ fun SettingsTabContent(viewModel: MainViewModel) {
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(24.dp)
+                        .padding(horizontal = 24.dp, vertical = 20.dp)
                 )
             }
         }
@@ -368,8 +385,8 @@ private fun SettingsGroup(content: @Composable ColumnScope.() -> Unit) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp),
-        shape = RoundedCornerShape(22.dp),
+            .padding(horizontal = SettingsHorizontalMargin),
+        shape = RoundedCornerShape(SettingsCardCorner),
         color = MaterialTheme.colorScheme.surface,
         content = { Column(content = content) }
     )
@@ -391,7 +408,9 @@ private fun SectionHeader(text: String) {
         style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.primary,
         fontWeight = FontWeight.SemiBold,
-        modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
+        // More space above than below: binds the header to the card that
+        // follows it, while clearly separating it from the section before.
+        modifier = Modifier.padding(start = SettingsHorizontalMargin, end = SettingsHorizontalMargin, top = 22.dp, bottom = 6.dp)
     )
 }
 
@@ -415,7 +434,8 @@ private fun SwitchRow(title: String, subtitle: String? = null, checked: Boolean,
         headlineContent = { Text(title) },
         supportingContent = subtitle?.let { { Text(it) } },
         trailingContent = { Switch(checked = checked, onCheckedChange = onCheckedChange) },
-        colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent)
+        colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+        modifier = Modifier.defaultMinSize(minHeight = SettingsRowMinHeight)
     )
 }
 
