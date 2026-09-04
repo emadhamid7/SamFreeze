@@ -74,6 +74,9 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
+    // Classic Material's pull-to-refresh (androidx.compose.material3 in this
+    // BOM predates PullToRefreshBox) — used only for Quick Stop's pull-refresh.
+    implementation("androidx.compose.material:material")
 
     implementation("androidx.datastore:datastore-preferences:1.1.1")
     implementation("androidx.work:work-runtime-ktx:2.9.1")

@@ -115,6 +115,21 @@ class MainViewModel(
         }
     }
 
+    /** Re-queries which packages currently have a running process — used by
+     *  Quick Stop's pull-to-refresh, since that's the one signal that goes
+     *  stale fastest (processes start/stop constantly in the background). */
+    suspend fun refreshRunning() {
+        val running = try {
+            statsRepository.runningPackages()
+        } catch (t: Throwable) {
+            return
+        }
+        val current = _state.value.apps
+        val updated = current.map { it.copy(isRunning = it.packageName in running) }
+        val newState = _state.value.copy(apps = updated)
+        _state.value = newState.copy(visibleApps = applyFilters(newState))
+    }
+
     fun setQuery(query: String) {
         val newState = _state.value.copy(query = query)
         _state.value = newState.copy(visibleApps = applyFilters(newState))

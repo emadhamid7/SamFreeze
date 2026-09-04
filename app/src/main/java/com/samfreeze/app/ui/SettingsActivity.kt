@@ -202,6 +202,32 @@ fun SettingsTabContent(viewModel: MainViewModel) {
                 }
             }
 
+            item { SectionHeader(stringResource(R.string.root)) }
+            item {
+                SettingsGroup {
+                    // Root is checked automatically (on app/screen launch) — no
+                    // manual "test" action needed, this just reflects live state.
+                    ListItem(
+                        headlineContent = { Text(stringResource(R.string.root_status)) },
+                        supportingContent = {
+                            Text(
+                                when (state.rootState) {
+                                    RootState.AVAILABLE -> stringResource(R.string.root_access)
+                                    RootState.UNAVAILABLE -> stringResource(R.string.root_unavailable)
+                                    RootState.CHECKING -> stringResource(R.string.checking_root)
+                                }
+                            )
+                        },
+                        trailingContent = {
+                            if (state.rootState == RootState.CHECKING) {
+                                CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                            }
+                        },
+                        colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent)
+                    )
+                }
+            }
+
             item { SectionHeader(stringResource(R.string.community)) }
             item {
                 SettingsGroup {
@@ -231,32 +257,6 @@ fun SettingsTabContent(viewModel: MainViewModel) {
                         modifier = Modifier.clickable {
                             context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(TELEGRAM_URL)))
                         }
-                    )
-                }
-            }
-
-            item { SectionHeader(stringResource(R.string.root)) }
-            item {
-                SettingsGroup {
-                    // Root is checked automatically (on app/screen launch) — no
-                    // manual "test" action needed, this just reflects live state.
-                    ListItem(
-                        headlineContent = { Text(stringResource(R.string.root_status)) },
-                        supportingContent = {
-                            Text(
-                                when (state.rootState) {
-                                    RootState.AVAILABLE -> stringResource(R.string.root_access)
-                                    RootState.UNAVAILABLE -> stringResource(R.string.root_unavailable)
-                                    RootState.CHECKING -> stringResource(R.string.checking_root)
-                                }
-                            )
-                        },
-                        trailingContent = {
-                            if (state.rootState == RootState.CHECKING) {
-                                CircularProgressIndicator(modifier = Modifier.size(20.dp))
-                            }
-                        },
-                        colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent)
                     )
                 }
             }

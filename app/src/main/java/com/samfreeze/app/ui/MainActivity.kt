@@ -7,6 +7,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.Image
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -23,6 +30,9 @@ import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Sort
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -91,7 +101,11 @@ private enum class MainTab { FREEZE, QUICK_STOP, SETTINGS }
  *  Quick Stop list). No "All" here — space is tight and Running covers that need. */
 private enum class QuickStopFilter { USER, SYSTEM, RUNNING, SELECTED }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(
+    ExperimentalMaterial3Api::class,
+    androidx.compose.material.ExperimentalMaterialApi::class,
+    androidx.compose.foundation.ExperimentalFoundationApi::class
+)
 @Composable
 fun MainScreen(
     viewModel: MainViewModel,
@@ -114,19 +128,36 @@ fun MainScreen(
     var quickStopFilter by remember { mutableStateOf(QuickStopFilter.USER) }
     var quickStopSort by remember { mutableStateOf(SortOrder.NAME_ASC) }
     var showQuickStopSortMenu by remember { mutableStateOf(false) }
+    var quickStopRefreshing by remember { mutableStateOf(false) }
+    val quickStopPullState = rememberPullRefreshState(
+        refreshing = quickStopRefreshing,
+        onRefresh = {
+            scope.launch {
+                quickStopRefreshing = true
+                viewModel.refreshRunning()
+                quickStopRefreshing = false
+            }
+        }
+    )
     var confirmForceStopList by remember { mutableStateOf(false) }
 
     Scaffold(
         bottomBar = {
-            if (state.selectionMode && tab == MainTab.FREEZE) {
-                BottomSelectionBar(
-                    count = state.selectedPackages.size,
-                    onFreeze = { viewModel.freezeSelected() },
-                    onUnfreeze = { viewModel.unfreezeSelected() },
-                    onCancel = { viewModel.clearSelection() }
-                )
-            } else {
-                MainBottomNav(tab = tab, onTabSelected = { tab = it })
+            AnimatedContent(
+                targetState = state.selectionMode && tab == MainTab.FREEZE,
+                transitionSpec = { fadeIn(tween(180)) togetherWith fadeOut(tween(120)) },
+                label = "bottom_bar"
+            ) { showSelectionBar ->
+                if (showSelectionBar) {
+                    BottomSelectionBar(
+                        count = state.selectedPackages.size,
+                        onFreeze = { viewModel.freezeSelected() },
+                        onUnfreeze = { viewModel.unfreezeSelected() },
+                        onCancel = { viewModel.clearSelection() }
+                    )
+                } else {
+                    MainBottomNav(tab = tab, onTabSelected = { tab = it })
+                }
             }
         },
         floatingActionButton = {
@@ -142,7 +173,12 @@ fun MainScreen(
         }
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize()) {
-            if (tab == MainTab.SETTINGS) {
+            AnimatedContent(
+                targetState = tab,
+                transitionSpec = { fadeIn(tween(180)) togetherWith fadeOut(tween(120)) },
+                label = "tab_content"
+            ) { currentTab ->
+            if (currentTab == MainTab.SETTINGS) {
                 // Settings doesn't need root to be useful (theme, backups,
                 // community links all work without it), so it isn't gated
                 // behind the root check the way Freeze/Quick Stop are.
@@ -159,11 +195,11 @@ fun MainScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         SearchBar(
-                            query = if (tab == MainTab.FREEZE) state.query else quickStopQuery,
-                            onQueryChange = { if (tab == MainTab.FREEZE) viewModel.setQuery(it) else quickStopQuery = it },
+                            query = if (currentTab == MainTab.FREEZE) state.query else quickStopQuery,
+                            onQueryChange = { if (currentTab == MainTab.FREEZE) viewModel.setQuery(it) else quickStopQuery = it },
                             modifier = Modifier.weight(1f)
                         )
-                        if (tab == MainTab.FREEZE) {
+                        if (currentTab == MainTab.FREEZE) {
                             IconButton(onClick = onOpenLevels) {
                                 Icon(Icons.Default.Layers, contentDescription = stringResource(R.string.freeze_levels))
                             }
@@ -172,7 +208,7 @@ fun MainScreen(
                         }
                     }
 
-                    when (tab) {
+                    when (currentTab) {
                         MainTab.FREEZE -> {
                             Row(
                                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
@@ -293,36 +329,51 @@ fun MainScreen(
                                         else -> list.sortedBy { it.label.lowercase() }
                                     }
                                 }
-                                if (filteredForStop.isEmpty()) {
-                                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                        Text(
-                                            if (quickStopQuery.isNotBlank()) stringResource(R.string.no_results_for, quickStopQuery)
-                                            else stringResource(R.string.no_apps_found),
-                                            style = MaterialTheme.typography.bodyLarge,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                } else {
-                                    LazyColumn(
-                                        modifier = Modifier.fillMaxSize(),
-                                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                                    ) {
-                                        items(filteredForStop, key = { it.packageName }) { appInfo ->
-                                            QuickStopRow(
-                                                app = appInfo,
-                                                checked = appInfo.packageName in quickStopList,
-                                                showRiskDots = showRiskDots,
-                                                onToggle = { scope.launch { app.preferencesRepository.toggleQuickStop(appInfo.packageName) } }
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .pullRefresh(quickStopPullState)
+                                ) {
+                                    if (filteredForStop.isEmpty()) {
+                                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                            Text(
+                                                if (quickStopQuery.isNotBlank()) stringResource(R.string.no_results_for, quickStopQuery)
+                                                else stringResource(R.string.no_apps_found),
+                                                style = MaterialTheme.typography.bodyLarge,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
                                         }
+                                    } else {
+                                        LazyColumn(
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                                        ) {
+                                            items(filteredForStop, key = { it.packageName }) { appInfo ->
+                                                QuickStopRow(
+                                                    app = appInfo,
+                                                    checked = appInfo.packageName in quickStopList,
+                                                    showRiskDots = showRiskDots,
+                                                    onToggle = { scope.launch { app.preferencesRepository.toggleQuickStop(appInfo.packageName) } },
+                                                    modifier = Modifier.animateItemPlacement(tween(220))
+                                                )
+                                            }
+                                        }
                                     }
+                                    PullRefreshIndicator(
+                                        refreshing = quickStopRefreshing,
+                                        state = quickStopPullState,
+                                        modifier = Modifier.align(Alignment.TopCenter),
+                                        backgroundColor = MaterialTheme.colorScheme.surface,
+                                        contentColor = MaterialTheme.colorScheme.primary
+                                    )
                                 }
                             }
                         }
                         MainTab.SETTINGS -> Unit
                     }
                 }
+            }
             }
             }
         }
@@ -420,7 +471,16 @@ private fun RowScope.CompactNavItem(
     label: String,
     onClick: () -> Unit
 ) {
-    val color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+    val color by animateColorAsState(
+        targetValue = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+        animationSpec = tween(180),
+        label = "nav_item_color"
+    )
+    val iconSize by animateDpAsState(
+        targetValue = if (selected) 25.dp else 23.dp,
+        animationSpec = tween(180),
+        label = "nav_item_icon_size"
+    )
     Column(
         modifier = Modifier
             .weight(1f)
@@ -433,14 +493,20 @@ private fun RowScope.CompactNavItem(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(icon, contentDescription = label, tint = color, modifier = Modifier.size(23.dp))
+        Icon(icon, contentDescription = label, tint = color, modifier = Modifier.size(iconSize))
         Spacer(Modifier.height(3.dp))
         Text(label, style = MaterialTheme.typography.labelSmall, color = color, maxLines = 1)
     }
 }
 
 @Composable
-private fun QuickStopRow(app: AppInfo, checked: Boolean, showRiskDots: Boolean = true, onToggle: () -> Unit) {
+private fun QuickStopRow(
+    app: AppInfo,
+    checked: Boolean,
+    showRiskDots: Boolean = true,
+    onToggle: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     val context = LocalContext.current
     var icon by remember(app.packageName) { mutableStateOf<Drawable?>(null) }
     val appRepo = (context.applicationContext as SamFreezeApp).packageRepository
@@ -449,12 +515,18 @@ private fun QuickStopRow(app: AppInfo, checked: Boolean, showRiskDots: Boolean =
         icon = appRepo.loadIcon(app.packageName)
     }
 
+    val rowColor by animateColorAsState(
+        targetValue = if (checked) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
+        animationSpec = tween(220),
+        label = "quick_stop_row_color"
+    )
+
     Surface(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
             .clickable(onClick = onToggle),
-        color = if (checked) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
+        color = rowColor
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(10.dp),
@@ -564,6 +636,7 @@ private fun BottomSelectionBar(count: Int, onFreeze: () -> Unit, onUnfreeze: () 
 }
 
 @Composable
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 private fun AppList(
     apps: List<AppInfo>,
     showPackageNames: Boolean,
@@ -600,7 +673,10 @@ private fun AppList(
                 selected = app.packageName in selectedPackages,
                 onClick = { onClick(app) },
                 onLongClick = { onLongClick(app) },
-                onToggleFreeze = { onToggleFreeze(app) }
+                onToggleFreeze = { onToggleFreeze(app) },
+                // Smoothly reflows rows into their new spot when the list is
+                // filtered, sorted, or searched, instead of a hard jump-cut.
+                modifier = Modifier.animateItemPlacement(tween(220))
             )
         }
         item { Spacer(Modifier.height(24.dp)) }
@@ -617,7 +693,8 @@ private fun AppRow(
     showRiskDots: Boolean = true,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
-    onToggleFreeze: () -> Unit
+    onToggleFreeze: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     var icon by remember(app.packageName) { mutableStateOf<Drawable?>(null) }
@@ -630,14 +707,19 @@ private fun AppRow(
     // Flat One UI-style row: frozen apps get a blue tint across the whole
     // tile so they're easy to spot at a glance; the FROZEN tag itself gets
     // its own dark-tinted chip on top of that so the tag text still pops
-    // instead of blending into the blue.
-    val tileColor = if (app.state == AppState.FROZEN) {
-        MaterialTheme.colorScheme.primaryContainer
-    } else {
-        MaterialTheme.colorScheme.surface
-    }
+    // instead of blending into the blue. Animated so freezing/unfreezing
+    // eases into the new color instead of snapping.
+    val tileColor by animateColorAsState(
+        targetValue = if (app.state == AppState.FROZEN) {
+            MaterialTheme.colorScheme.primaryContainer
+        } else {
+            MaterialTheme.colorScheme.surface
+        },
+        animationSpec = tween(220),
+        label = "tile_color"
+    )
     Surface(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .combinedClickable(onClick = onClick, onLongClick = onLongClick),
