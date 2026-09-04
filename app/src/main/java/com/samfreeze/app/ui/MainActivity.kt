@@ -176,8 +176,14 @@ fun MainScreen(
             AnimatedContent(
                 targetState = tab,
                 transitionSpec = { fadeIn(tween(180)) togetherWith fadeOut(tween(120)) },
-                label = "tab_content"
+                label = "tab_content",
+                modifier = Modifier.fillMaxSize()
             ) { currentTab ->
+            // AnimatedContent lays its content out in a Box internally, so
+            // everything below needs its own Column to keep the header
+            // (search bar / filters) stacked above the list like before —
+            // without this they'd overlap instead of stacking vertically.
+            Column(modifier = Modifier.fillMaxSize()) {
             if (currentTab == MainTab.SETTINGS) {
                 // Settings doesn't need root to be useful (theme, backups,
                 // community links all work without it), so it isn't gated
@@ -373,6 +379,7 @@ fun MainScreen(
                         MainTab.SETTINGS -> Unit
                     }
                 }
+            }
             }
             }
             }
