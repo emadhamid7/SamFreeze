@@ -8,6 +8,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.Image
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -175,7 +177,20 @@ fun MainScreen(
         Column(modifier = Modifier.padding(padding).fillMaxSize()) {
             AnimatedContent(
                 targetState = tab,
-                transitionSpec = { fadeIn(tween(180)) togetherWith fadeOut(tween(120)) },
+                transitionSpec = {
+                    // Slide direction follows the bottom nav order (Freeze →
+                    // Quick Stop → Settings) so switching tabs reads like
+                    // moving between panels, not just a cross-fade.
+                    val forward = targetState.ordinal > initialState.ordinal
+                    val slideDistance = { fullWidth: Int -> fullWidth / 4 }
+                    if (forward) {
+                        (slideInHorizontally(tween(220)) { slideDistance(it) } + fadeIn(tween(220))) togetherWith
+                            (slideOutHorizontally(tween(180)) { -slideDistance(it) } + fadeOut(tween(140)))
+                    } else {
+                        (slideInHorizontally(tween(220)) { -slideDistance(it) } + fadeIn(tween(220))) togetherWith
+                            (slideOutHorizontally(tween(180)) { slideDistance(it) } + fadeOut(tween(140)))
+                    }
+                },
                 label = "tab_content",
                 modifier = Modifier.fillMaxSize()
             ) { currentTab ->
@@ -494,7 +509,7 @@ private fun RowScope.CompactNavItem(
             .fillMaxHeight()
             .clickable(
                 onClick = onClick,
-                indication = null,
+                indication = androidx.compose.material.ripple.rememberRipple(bounded = false, radius = 40.dp),
                 interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
             ),
         horizontalAlignment = Alignment.CenterHorizontally,
