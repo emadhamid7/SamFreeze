@@ -144,6 +144,12 @@ fun MainScreen(
     var confirmForceStopList by remember { mutableStateOf(false) }
 
     Scaffold(
+        // The top header rows (search bar / Settings logo row) already apply
+        // statusBarsPadding() themselves, and the bottom nav applies
+        // navigationBarsPadding(). Scaffold's default contentWindowInsets
+        // would add the status bar inset a second time, pushing the top bar
+        // down — so zero it out here.
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
             AnimatedContent(
                 targetState = state.selectionMode && tab == MainTab.FREEZE,
