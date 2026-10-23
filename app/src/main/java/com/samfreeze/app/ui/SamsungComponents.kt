@@ -23,6 +23,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 // Colors sampled from One UI 6 screenshots.
@@ -161,4 +162,20 @@ fun SamsungRadio(selected: Boolean) {
     ) {
         if (selected) Box(Modifier.size(12.dp).clip(CircleShape).background(SwitchOn))
     }
+}
+
+/**
+ * The one caption style used app-wide (section titles, counts, small
+ * headings): bold, muted gray like One UI's "Privacy" / "Additional
+ * security settings" captions, instead of the accent color.
+ */
+@Composable
+fun SectionCaption(text: String, modifier: Modifier = Modifier) {
+    Text(
+        text,
+        style = MaterialTheme.typography.labelLarge,
+        fontWeight = FontWeight.SemiBold,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = modifier
+    )
 }

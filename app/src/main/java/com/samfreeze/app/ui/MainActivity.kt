@@ -299,10 +299,8 @@ fun MainScreen(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
                             )
-                            Text(
+                            SectionCaption(
                                 stringResource(R.string.n_in_quick_stop_list, quickStopList.size),
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
                             )
 

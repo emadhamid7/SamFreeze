@@ -37,7 +37,6 @@ private const val REPO_URL = "https://github.com/emadhamid7/SamFreeze"
 private const val TELEGRAM_URL = "https://t.me/Samfreeze"
 private const val GITHUB_PROFILE_URL = "https://github.com/emadhamid7"
 private const val UAD_REPO_URL = "https://github.com/Universal-Debloater-Alliance/universal-android-debloater-next-generation"
-private const val CLAUDE_URL = "https://claude.ai"
 
 // Shared layout constants so every card/row in Settings has identical
 // margins, corner radius, and height — pure visual rhythm, no behavior here.
@@ -69,7 +68,6 @@ fun SettingsTabContent(viewModel: MainViewModel) {
     var importStatus by remember { mutableStateOf<String?>(null) }
     var confirmUnfreezeAll by remember { mutableStateOf(false) }
     var showCreditsDialog by remember { mutableStateOf(false) }
-    var showDarkSettings by remember { mutableStateOf(false) }
 
     val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         if (uri != null) {
@@ -115,35 +113,31 @@ fun SettingsTabContent(viewModel: MainViewModel) {
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        // Same-style header as the Freeze/Quick Stop top row, but with the
-        // app logo + name instead of a search bar — no back arrow needed
-        // since this is a tab, not a separate screen, and the bottom nav
-        // stays put the whole time.
-        Row(
+        // Samsung Settings-style large title, no logo / app name.
+        Text(
+            stringResource(R.string.settings),
+            style = MaterialTheme.typography.headlineLarge,
+            fontWeight = FontWeight.Bold,
             modifier = Modifier
                 .fillMaxWidth()
                 .statusBarsPadding()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Image(
-                painter = painterResource(R.drawable.logo),
-                contentDescription = null,
-                modifier = Modifier.size(32.dp).clip(RoundedCornerShape(9.dp))
-            )
-            Spacer(Modifier.width(12.dp))
-            Text(
-                stringResource(R.string.app_name),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold
-            )
-        }
+                .padding(start = 28.dp, end = 28.dp, top = 36.dp, bottom = 12.dp)
+        )
 
         LazyColumn(modifier = Modifier.fillMaxSize()) {
 
             item { SectionHeader(stringResource(R.string.appearance)) }
             item {
                 SettingsGroup {
+                    SwitchRow(
+                        title = stringResource(R.string.match_device_theme),
+                        subtitle = stringResource(R.string.match_device_theme_desc),
+                        checked = theme == "system",
+                        onCheckedChange = { on ->
+                            scope.launch { prefs.setTheme(if (on) "system" else if (systemDark) "dark" else "light") }
+                        }
+                    )
+                    GroupDivider()
                     val effectiveDark = when (theme) { "dark" -> true; "light" -> false; else -> systemDark }
                     SamsungThemeSelector(
                         isDark = effectiveDark,
@@ -151,18 +145,10 @@ fun SettingsTabContent(viewModel: MainViewModel) {
                         lightLabel = stringResource(R.string.theme_light),
                         darkLabel = stringResource(R.string.theme_dark)
                     )
-                    GroupDivider()
-                    ListItem(
-                        headlineContent = { Text(stringResource(R.string.dark_mode_settings)) },
-                        colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
-                        modifier = Modifier
-                            .defaultMinSize(minHeight = SettingsRowMinHeight)
-                            .clickable { showDarkSettings = true }
-                    )
                 }
             }
 
-            item { SectionHeader(stringResource(R.string.app_display)) }
+            item { SectionHeader(stringResource(R.string.app_display_and_behavior)) }
             item {
                 SettingsGroup {
                     SwitchRow(
@@ -176,12 +162,7 @@ fun SettingsTabContent(viewModel: MainViewModel) {
                         checked = showRiskDots,
                         onCheckedChange = { scope.launch { prefs.setShowRiskDots(it) } }
                     )
-                }
-            }
-
-            item { SectionHeader(stringResource(R.string.behavior)) }
-            item {
-                SettingsGroup {
+                    GroupDivider()
                     SwitchRow(
                         title = stringResource(R.string.confirm_before_freeze),
                         checked = confirmBeforeFreeze,
@@ -196,38 +177,7 @@ fun SettingsTabContent(viewModel: MainViewModel) {
                 }
             }
 
-            item { SectionHeader(stringResource(R.string.backup_settings)) }
-            item {
-                SettingsGroup {
-                    ListItem(
-                        headlineContent = { Text(stringResource(R.string.backup_export)) },
-                        supportingContent = { Text(stringResource(R.string.backup_export_desc)) },
-                        colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
-                        modifier = Modifier
-                            .defaultMinSize(minHeight = SettingsRowMinHeight)
-                            .clickable {
-                                if (state.isLoading || state.rootState != RootState.AVAILABLE) {
-                                    android.widget.Toast.makeText(context, context.getString(R.string.backup_not_ready), android.widget.Toast.LENGTH_SHORT).show()
-                                } else exportLauncher.launch("samfreeze-backup.json")
-                            }
-                    )
-                    GroupDivider()
-                    ListItem(
-                        headlineContent = { Text(stringResource(R.string.backup_import)) },
-                        supportingContent = { Text(importStatus ?: stringResource(R.string.backup_import_desc)) },
-                        colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
-                        modifier = Modifier
-                            .defaultMinSize(minHeight = SettingsRowMinHeight)
-                            .clickable {
-                                if (state.isLoading || state.rootState != RootState.AVAILABLE) {
-                                    android.widget.Toast.makeText(context, context.getString(R.string.backup_not_ready), android.widget.Toast.LENGTH_SHORT).show()
-                                } else importLauncher.launch(arrayOf("application/json", "text/plain", "application/octet-stream"))
-                            }
-                    )
-                }
-            }
-
-            item { SectionHeader(stringResource(R.string.advanced_settings)) }
+            item { SectionHeader(stringResource(R.string.advanced_and_bulk)) }
             item {
                 SettingsGroup {
                     SwitchRow(
@@ -235,12 +185,7 @@ fun SettingsTabContent(viewModel: MainViewModel) {
                         checked = advancedUninstallEnabled,
                         onCheckedChange = { scope.launch { prefs.setAdvancedUninstallEnabled(it) } }
                     )
-                }
-            }
-
-            item { SectionHeader(stringResource(R.string.bulk_actions)) }
-            item {
-                SettingsGroup {
+                    GroupDivider()
                     Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
                         Button(
                             onClick = { confirmUnfreezeAll = true },
@@ -283,7 +228,38 @@ fun SettingsTabContent(viewModel: MainViewModel) {
                 }
             }
 
-            item { SectionHeader(stringResource(R.string.community)) }
+            item { SectionHeader(stringResource(R.string.backup_settings)) }
+            item {
+                SettingsGroup {
+                    ListItem(
+                        headlineContent = { Text(stringResource(R.string.backup_export)) },
+                        supportingContent = { Text(stringResource(R.string.backup_export_desc)) },
+                        colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+                        modifier = Modifier
+                            .defaultMinSize(minHeight = SettingsRowMinHeight)
+                            .clickable {
+                                if (state.isLoading || state.rootState != RootState.AVAILABLE) {
+                                    android.widget.Toast.makeText(context, context.getString(R.string.backup_not_ready), android.widget.Toast.LENGTH_SHORT).show()
+                                } else exportLauncher.launch("samfreeze-backup.json")
+                            }
+                    )
+                    GroupDivider()
+                    ListItem(
+                        headlineContent = { Text(stringResource(R.string.backup_import)) },
+                        supportingContent = { Text(importStatus ?: stringResource(R.string.backup_import_desc)) },
+                        colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+                        modifier = Modifier
+                            .defaultMinSize(minHeight = SettingsRowMinHeight)
+                            .clickable {
+                                if (state.isLoading || state.rootState != RootState.AVAILABLE) {
+                                    android.widget.Toast.makeText(context, context.getString(R.string.backup_not_ready), android.widget.Toast.LENGTH_SHORT).show()
+                                } else importLauncher.launch(arrayOf("application/json", "text/plain", "application/octet-stream"))
+                            }
+                    )
+                }
+            }
+
+            item { SectionHeader(stringResource(R.string.community_and_credits)) }
             item {
                 SettingsGroup {
                     ListItem(
@@ -317,12 +293,7 @@ fun SettingsTabContent(viewModel: MainViewModel) {
                                 context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(TELEGRAM_URL)))
                             }
                     )
-                }
-            }
-
-            item { SectionHeader(stringResource(R.string.credits)) }
-            item {
-                SettingsGroup {
+                    GroupDivider()
                     ListItem(
                         headlineContent = { Text(stringResource(R.string.credits)) },
                         supportingContent = { Text(stringResource(R.string.credits_subtitle)) },
@@ -363,37 +334,6 @@ fun SettingsTabContent(viewModel: MainViewModel) {
         )
     }
 
-    if (showDarkSettings) {
-        Dialog(onDismissRequest = { showDarkSettings = false }) {
-            Surface(shape = RoundedCornerShape(28.dp), color = MaterialTheme.colorScheme.surface) {
-                Column(modifier = Modifier.padding(vertical = 20.dp)) {
-                    Text(
-                        stringResource(R.string.dark_mode_settings),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp)
-                    )
-                    ListItem(
-                        headlineContent = { Text(stringResource(R.string.follow_system_theme)) },
-                        supportingContent = { Text(stringResource(R.string.follow_system_theme_desc)) },
-                        trailingContent = {
-                            SamsungSwitch(
-                                checked = theme == "system",
-                                onCheckedChange = { on ->
-                                    scope.launch { prefs.setTheme(if (on) "system" else if (systemDark) "dark" else "light") }
-                                }
-                            )
-                        },
-                        colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent)
-                    )
-                    Row(modifier = Modifier.fillMaxWidth().padding(end = 16.dp), horizontalArrangement = Arrangement.End) {
-                        TextButton(onClick = { showDarkSettings = false }) { Text(stringResource(R.string.ok)) }
-                    }
-                }
-            }
-        }
-    }
-
     if (showCreditsDialog) {
         Dialog(onDismissRequest = { showCreditsDialog = false }) {
             Surface(
@@ -426,16 +366,6 @@ fun SettingsTabContent(viewModel: MainViewModel) {
                             context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(UAD_REPO_URL)))
                         }
                     )
-                    Spacer(Modifier.height(14.dp))
-                    CreditEntry(
-                        name = stringResource(R.string.credit_claude_name),
-                        role = stringResource(R.string.credit_claude_role),
-                        onClick = {
-                            showCreditsDialog = false
-                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(CLAUDE_URL)))
-                        }
-                    )
-
                     Spacer(Modifier.height(20.dp))
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                         TextButton(onClick = { showCreditsDialog = false }) { Text(stringResource(R.string.ok)) }
@@ -478,14 +408,11 @@ private fun GroupDivider() {
 
 @Composable
 private fun SectionHeader(text: String) {
-    Text(
+    // More space above than below: binds the caption to the card that
+    // follows it, while clearly separating it from the section before.
+    SectionCaption(
         text,
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.primary,
-        fontWeight = FontWeight.SemiBold,
-        // More space above than below: binds the header to the card that
-        // follows it, while clearly separating it from the section before.
-        modifier = Modifier.padding(start = SettingsHorizontalMargin, end = SettingsHorizontalMargin, top = 22.dp, bottom = 6.dp)
+        modifier = Modifier.padding(start = SettingsHorizontalMargin + 8.dp, end = SettingsHorizontalMargin, top = 22.dp, bottom = 8.dp)
     )
 }
 

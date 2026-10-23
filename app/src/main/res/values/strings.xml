@@ -113,7 +113,9 @@
     <string name="theme_system">System</string>
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
-    <string name="app_display">App display</string>
+    <string name="app_display_and_behavior">App display and behavior</string>
+    <string name="advanced_and_bulk">Advanced settings and bulk actions</string>
+    <string name="community_and_credits">Community and credits</string>
     <string name="show_package_names">Show package names</string>
     <string name="show_risk_dots">Show risk-level dots</string>
     <string name="behavior">Behavior</string>
@@ -141,8 +143,6 @@
     <string name="credit_emad_role">Creator and developer</string>
     <string name="credit_uad_name">UAD-NG</string>
     <string name="credit_uad_role">Debloat list and app descriptions from the Universal Android Debloater Next Generation project</string>
-    <string name="credit_claude_name">Claude AI</string>
-    <string name="credit_claude_role">Development assistance, by Anthropic</string>
     <string name="view_on_github">View on GitHub</string>
     <string name="update_debloat_list">Update debloat list</string>
     <string name="update_debloat_list_short">Update list</string>
@@ -180,9 +180,8 @@
     <string name="cache_clear_failed">Couldn\'t clear cache, check root access.</string>
     <string name="auto_clear_cache">Auto-clear cache</string>
     <string name="auto_clear_interval">Frequency</string>
-    <string name="dark_mode_settings">Dark mode settings</string>
-    <string name="follow_system_theme">Follow system setting</string>
-    <string name="follow_system_theme_desc">Switch between light and dark automatically with your device.</string>
+    <string name="match_device_theme">Match device theme</string>
+    <string name="match_device_theme_desc">Switches between light and dark automatically with your phone</string>
     <string name="backup_not_ready">Wait for the app list to finish loading (root required).</string>
     <string name="backup_saved">Backup saved: %1$d frozen, %2$d in Quick Stop.</string>
     <string name="backup_write_failed">Could not write the backup file.</string>

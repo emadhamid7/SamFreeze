@@ -193,10 +193,8 @@ fun LevelsScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
             )
 
-            Text(
+            SectionCaption(
                 stringResource(R.string.level_apps_matched, appsForLevel.size),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.outline,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
@@ -260,12 +258,7 @@ fun LevelsScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                         )
                         if (info.description.isNotBlank()) {
                             Spacer(Modifier.height(12.dp))
-                            Text(
-                                stringResource(R.string.level_description_title),
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            SectionCaption(stringResource(R.string.level_description_title))
                             Spacer(Modifier.height(4.dp))
                             Text(info.description)
                         }
