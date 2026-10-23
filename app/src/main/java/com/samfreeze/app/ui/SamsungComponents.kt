@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 // Colors sampled from One UI 6 screenshots.
 private val SwitchOn = Color(0xFF377AFF)
 private val SwitchOff = Color(0xFF646368)
+private val SwitchOffLight = Color(0xFFB4B4BA)
 private val SwitchThumb = Color(0xFFFCFCFE)
 
 /**
@@ -59,7 +60,9 @@ fun SamsungSwitch(
     modifier: Modifier = Modifier,
     enabled: Boolean = true
 ) {
-    val track by animateColorAsState(if (checked) SwitchOn else SwitchOff, tween(180), label = "swTrack")
+    val lightTheme = MaterialTheme.colorScheme.background.luminance() >= 0.5f
+    val off = if (lightTheme) SwitchOffLight else SwitchOff
+    val track by animateColorAsState(if (checked) SwitchOn else off, tween(180), label = "swTrack")
     val thumbX by animateDpAsState(if (checked) 15.dp else 2.dp, tween(180), label = "swThumb")
 
     val touch = if (onCheckedChange != null) {

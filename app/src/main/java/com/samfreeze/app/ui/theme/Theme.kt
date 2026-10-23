@@ -4,7 +4,13 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -72,6 +78,21 @@ fun SamFreezeTheme(
     }
 
     val colorScheme = if (useDark) DarkColors else LightColors
+
+    // Edge-to-edge: without this, status/nav bar icons stay white in light
+    // theme and vanish against the light background.
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            var ctx: Context = view.context
+            while (ctx is ContextWrapper && ctx !is Activity) ctx = ctx.baseContext
+            (ctx as? Activity)?.window?.let { window ->
+                val controller = WindowCompat.getInsetsController(window, view)
+                controller.isAppearanceLightStatusBars = !useDark
+                controller.isAppearanceLightNavigationBars = !useDark
+            }
+        }
+    }
 
     MaterialTheme(
         colorScheme = colorScheme,

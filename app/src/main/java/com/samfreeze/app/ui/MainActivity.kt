@@ -60,6 +60,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.foundation.border
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
@@ -492,37 +493,29 @@ private fun MainBottomNav(tab: MainTab, onTabSelected: (MainTab) -> Unit) {
 }
 
 /**
- * Shared floating container for the bottom nav and selection bar: a mostly
- * opaque (translucent, not see-through) flat fill with a hairline edge and a
- * soft shadow, narrower than the screen with modest corner rounding. A soft
- * fade of the background color sits behind it so list rows dissolve under the
- * bar instead of cutting off hard.
+ * Shared floating container for the bottom nav and selection bar: fully
+ * opaque, flat, narrower than the screen, with modest rounding. In light theme
+ * it uses a pale accent-tinted fill, a visible edge and a real shadow so it
+ * never reads as just another white card; in dark theme it's the card color
+ * with a hairline edge.
  */
 @Composable
 private fun FloatingBarContainer(content: @Composable () -> Unit) {
     val scheme = MaterialTheme.colorScheme
     val dark = scheme.background.luminance() < 0.5f
     val shape = RoundedCornerShape(BarCorner)
-    val fill = scheme.surface.copy(alpha = if (dark) 0.90f else 0.92f)
-    val edge = if (dark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.07f)
-    val fadeColor = scheme.background
+    val fill = if (dark) scheme.surface else scheme.primary.copy(alpha = 0.10f).compositeOver(Color.White)
+    val edge = if (dark) Color.White.copy(alpha = 0.10f) else scheme.primary.copy(alpha = 0.28f)
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .drawBehind {
-                drawRect(
-                    Brush.verticalGradient(
-                        colors = listOf(fadeColor.copy(alpha = 0f), fadeColor.copy(alpha = 0.85f), fadeColor.copy(alpha = 0.95f))
-                    )
-                )
-            }
             .navigationBarsPadding()
             .padding(horizontal = 48.dp, vertical = 10.dp)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .shadow(if (dark) 0.dp else 6.dp, shape, clip = false, ambientColor = Color.Black.copy(alpha = 0.25f), spotColor = Color.Black.copy(alpha = 0.25f))
+                .shadow(if (dark) 0.dp else 14.dp, shape, clip = false, ambientColor = Color.Black.copy(alpha = 0.30f), spotColor = Color.Black.copy(alpha = 0.30f))
                 .clip(shape)
                 .background(fill)
                 .border(1.dp, edge, shape)
@@ -547,7 +540,7 @@ private fun RowScope.NavPillItem(
         label = "nav_item_color"
     )
     val capsule by animateColorAsState(
-        targetValue = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.16f) else Color.Transparent,
+        targetValue = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.22f) else Color.Transparent,
         animationSpec = tween(180),
         label = "nav_item_capsule"
     )
@@ -637,7 +630,7 @@ private fun QuickStopRow(
 @Composable
 internal fun SearchBar(query: String, onQueryChange: (String) -> Unit, modifier: Modifier = Modifier) {
     val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
-    val fill = if (isDark) Color(0xFF232323) else Color(0xFFEDEDEF)
+    val fill = if (isDark) Color(0xFF232323) else Color.White
     val muted = if (isDark) Color(0xFF9B9BA0) else Color(0xFF77777C)
     val focusManager = LocalFocusManager.current
 
@@ -648,6 +641,7 @@ internal fun SearchBar(query: String, onQueryChange: (String) -> Unit, modifier:
             .height(48.dp)
             .clip(CircleShape)
             .background(fill)
+            .border(1.dp, if (isDark) Color.Transparent else Color.Black.copy(alpha = 0.08f), CircleShape)
             .padding(start = 16.dp, end = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
