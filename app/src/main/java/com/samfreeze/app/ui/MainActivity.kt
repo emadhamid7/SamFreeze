@@ -46,6 +46,19 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.ImeAction
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.CreationExtras
@@ -238,11 +251,12 @@ fun MainScreen(
                     when (currentTab) {
                         MainTab.FREEZE -> {
                             Row(
-                                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                FilterRow(selected = state.filter, onSelect = viewModel::setFilter)
+                                Box(modifier = Modifier.weight(1f).horizontalScroll(rememberScrollState())) {
+                                    FilterRow(selected = state.filter, onSelect = viewModel::setFilter)
+                                }
                                 Box {
                                     IconButton(onClick = { showSortMenu = true }) {
                                         Icon(Icons.Default.Sort, contentDescription = stringResource(R.string.sort_by))
@@ -305,11 +319,12 @@ fun MainScreen(
                             )
 
                             Row(
-                                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                QuickStopFilterRow(selected = quickStopFilter, onSelect = { quickStopFilter = it })
+                                Box(modifier = Modifier.weight(1f).horizontalScroll(rememberScrollState())) {
+                                    QuickStopFilterRow(selected = quickStopFilter, onSelect = { quickStopFilter = it })
+                                }
                                 Box {
                                     IconButton(onClick = { showQuickStopSortMenu = true }) {
                                         Icon(Icons.Default.Sort, contentDescription = stringResource(R.string.sort_by))
@@ -581,18 +596,53 @@ private fun QuickStopRow(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+/** One UI-style search pill: filled, fully rounded, muted bold "Search" hint, no mic. */
 @Composable
 internal fun SearchBar(query: String, onQueryChange: (String) -> Unit, modifier: Modifier = Modifier) {
-    OutlinedTextField(
-        value = query,
-        onValueChange = onQueryChange,
-        modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-        placeholder = { Text(stringResource(R.string.search_hint)) },
-        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-        singleLine = true,
-        shape = RoundedCornerShape(14.dp)
-    )
+    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val fill = if (isDark) Color(0xFF232323) else Color(0xFFEDEDEF)
+    val muted = if (isDark) Color(0xFF9B9BA0) else Color(0xFF77777C)
+    val focusManager = LocalFocusManager.current
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .height(48.dp)
+            .clip(CircleShape)
+            .background(fill)
+            .padding(start = 16.dp, end = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(Icons.Default.Search, contentDescription = null, tint = muted, modifier = Modifier.size(22.dp))
+        Spacer(Modifier.width(12.dp))
+        Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+            if (query.isEmpty()) {
+                Text(
+                    stringResource(R.string.search_hint),
+                    color = muted,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1
+                )
+            }
+            BasicTextField(
+                value = query,
+                onValueChange = onQueryChange,
+                singleLine = true,
+                textStyle = TextStyle(color = MaterialTheme.colorScheme.onSurface, fontSize = 17.sp),
+                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+        if (query.isNotEmpty()) {
+            IconButton(onClick = { onQueryChange("") }, modifier = Modifier.size(32.dp)) {
+                Icon(Icons.Default.Close, contentDescription = null, tint = muted, modifier = Modifier.size(20.dp))
+            }
+        }
+    }
 }
 
 @Composable

@@ -21,6 +21,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.samfreeze.app.R
@@ -40,8 +41,8 @@ private const val UAD_REPO_URL = "https://github.com/Universal-Debloater-Allianc
 
 // Shared layout constants so every card/row in Settings has identical
 // margins, corner radius, and height — pure visual rhythm, no behavior here.
-private val SettingsHorizontalMargin = 20.dp
-private val SettingsCardCorner = 22.dp
+private val SettingsHorizontalMargin = 12.dp
+private val SettingsCardCorner = 24.dp
 private val SettingsRowMinHeight = 56.dp
 
 /**
@@ -113,15 +114,15 @@ fun SettingsTabContent(viewModel: MainViewModel) {
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        // Samsung Settings-style large title, no logo / app name.
+        // Samsung-style title: compact, bold, aligned with the row text.
         Text(
             stringResource(R.string.settings),
-            style = MaterialTheme.typography.headlineLarge,
+            fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier
                 .fillMaxWidth()
                 .statusBarsPadding()
-                .padding(start = 28.dp, end = 28.dp, top = 36.dp, bottom = 12.dp)
+                .padding(start = SettingsHorizontalMargin + 16.dp, end = 28.dp, top = 16.dp, bottom = 8.dp)
         )
 
         LazyColumn(modifier = Modifier.fillMaxSize()) {
@@ -129,21 +130,20 @@ fun SettingsTabContent(viewModel: MainViewModel) {
             item { SectionHeader(stringResource(R.string.appearance)) }
             item {
                 SettingsGroup {
-                    SwitchRow(
-                        title = stringResource(R.string.match_device_theme),
-                        subtitle = stringResource(R.string.match_device_theme_desc),
-                        checked = theme == "system",
-                        onCheckedChange = { on ->
-                            scope.launch { prefs.setTheme(if (on) "system" else if (systemDark) "dark" else "light") }
-                        }
-                    )
-                    GroupDivider()
                     val effectiveDark = when (theme) { "dark" -> true; "light" -> false; else -> systemDark }
                     SamsungThemeSelector(
                         isDark = effectiveDark,
                         onSelect = { dark -> scope.launch { prefs.setTheme(if (dark) "dark" else "light") } },
                         lightLabel = stringResource(R.string.theme_light),
                         darkLabel = stringResource(R.string.theme_dark)
+                    )
+                    GroupDivider()
+                    SwitchRow(
+                        title = stringResource(R.string.match_device_theme),
+                        checked = theme == "system",
+                        onCheckedChange = { on ->
+                            scope.launch { prefs.setTheme(if (on) "system" else if (systemDark) "dark" else "light") }
+                        }
                     )
                 }
             }
@@ -201,33 +201,6 @@ fun SettingsTabContent(viewModel: MainViewModel) {
                 }
             }
 
-            item { SectionHeader(stringResource(R.string.root)) }
-            item {
-                SettingsGroup {
-                    // Root is checked automatically (on app/screen launch) — no
-                    // manual "test" action needed, this just reflects live state.
-                    ListItem(
-                        headlineContent = { Text(stringResource(R.string.root_status)) },
-                        supportingContent = {
-                            Text(
-                                when (state.rootState) {
-                                    RootState.AVAILABLE -> stringResource(R.string.root_access)
-                                    RootState.UNAVAILABLE -> stringResource(R.string.root_unavailable)
-                                    RootState.CHECKING -> stringResource(R.string.checking_root)
-                                }
-                            )
-                        },
-                        trailingContent = {
-                            if (state.rootState == RootState.CHECKING) {
-                                CircularProgressIndicator(modifier = Modifier.size(20.dp))
-                            }
-                        },
-                        colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
-                        modifier = Modifier.defaultMinSize(minHeight = SettingsRowMinHeight)
-                    )
-                }
-            }
-
             item { SectionHeader(stringResource(R.string.backup_settings)) }
             item {
                 SettingsGroup {
@@ -259,7 +232,7 @@ fun SettingsTabContent(viewModel: MainViewModel) {
                 }
             }
 
-            item { SectionHeader(stringResource(R.string.community_and_credits)) }
+            item { SectionHeader(stringResource(R.string.credits)) }
             item {
                 SettingsGroup {
                     ListItem(
@@ -301,6 +274,33 @@ fun SettingsTabContent(viewModel: MainViewModel) {
                         modifier = Modifier
                             .defaultMinSize(minHeight = SettingsRowMinHeight)
                             .clickable { showCreditsDialog = true }
+                    )
+                }
+            }
+
+            item { SectionHeader(stringResource(R.string.root)) }
+            item {
+                SettingsGroup {
+                    // Root is checked automatically (on app/screen launch) — no
+                    // manual "test" action needed, this just reflects live state.
+                    ListItem(
+                        headlineContent = { Text(stringResource(R.string.root_status)) },
+                        supportingContent = {
+                            Text(
+                                when (state.rootState) {
+                                    RootState.AVAILABLE -> stringResource(R.string.root_access)
+                                    RootState.UNAVAILABLE -> stringResource(R.string.root_unavailable)
+                                    RootState.CHECKING -> stringResource(R.string.checking_root)
+                                }
+                            )
+                        },
+                        trailingContent = {
+                            if (state.rootState == RootState.CHECKING) {
+                                CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                            }
+                        },
+                        colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+                        modifier = Modifier.defaultMinSize(minHeight = SettingsRowMinHeight)
                     )
                 }
             }
@@ -412,7 +412,7 @@ private fun SectionHeader(text: String) {
     // follows it, while clearly separating it from the section before.
     SectionCaption(
         text,
-        modifier = Modifier.padding(start = SettingsHorizontalMargin + 8.dp, end = SettingsHorizontalMargin, top = 22.dp, bottom = 8.dp)
+        modifier = Modifier.padding(start = SettingsHorizontalMargin + 16.dp, end = SettingsHorizontalMargin, top = 18.dp, bottom = 6.dp)
     )
 }
 

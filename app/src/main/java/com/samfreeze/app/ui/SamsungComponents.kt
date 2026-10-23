@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -175,7 +176,8 @@ fun SectionCaption(text: String, modifier: Modifier = Modifier) {
         text,
         style = MaterialTheme.typography.labelLarge,
         fontWeight = FontWeight.SemiBold,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        // Dimmer than the option text so captions sit back, like One UI.
+        color = if (MaterialTheme.colorScheme.background.luminance() < 0.5f) Color(0xFF8F8F95) else Color(0xFF6A6B71),
         modifier = modifier
     )
 }
