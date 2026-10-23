@@ -2,8 +2,8 @@ package com.samfreeze.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// One UI–inspired palette: Samsung's signature blue accent, flat white
-// surfaces in light mode, near-black (not navy) in dark mode.
+// One UI–inspired palette: Samsung's signature blue accent, white cards on a soft grey
+// background in light mode, near-black (not navy) in dark mode.
 val OneUIBlue = Color(0xFF1B64F2)
 val OneUIBlueDark = Color(0xFF6E9FFF)
 
@@ -14,7 +14,7 @@ val FrozenBlueDark = Color(0xFF8FB6FF)
 val RedError = Color(0xFFD5473A)
 val RedErrorDark = Color(0xFFFF8A75)
 
-val SurfaceLight = Color(0xFFFFFFFF)
+val SurfaceLight = Color(0xFFEFEFF3)
 val SurfaceDark = Color(0xFF000000)
-val RowLight = Color(0xFFF5F5F7)
+val RowLight = Color(0xFFFFFFFF)
 val RowDark = Color(0xFF171719)

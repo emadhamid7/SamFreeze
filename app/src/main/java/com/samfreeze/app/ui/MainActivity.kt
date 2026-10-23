@@ -20,6 +20,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -490,38 +492,47 @@ private fun MainBottomNav(tab: MainTab, onTabSelected: (MainTab) -> Unit) {
 }
 
 /**
- * Shared floating "glass" container for the bottom nav and selection bar:
- * translucent gradient fill + hairline highlight edge, floating with margins.
- * (Fake glass — content isn't blurred, only see-through.)
+ * Shared floating container for the bottom nav and selection bar: a mostly
+ * opaque (translucent, not see-through) flat fill with a hairline edge and a
+ * soft shadow, narrower than the screen with modest corner rounding. A soft
+ * fade of the background color sits behind it so list rows dissolve under the
+ * bar instead of cutting off hard.
  */
 @Composable
 private fun FloatingBarContainer(content: @Composable () -> Unit) {
     val scheme = MaterialTheme.colorScheme
     val dark = scheme.background.luminance() < 0.5f
-    val shape = RoundedCornerShape(32.dp)
-    val edgeTop = if (dark) Color.White.copy(alpha = 0.20f) else Color.Black.copy(alpha = 0.10f)
-    val edgeBottom = if (dark) Color.White.copy(alpha = 0.04f) else Color.Black.copy(alpha = 0.03f)
+    val shape = RoundedCornerShape(BarCorner)
+    val fill = scheme.surface.copy(alpha = if (dark) 0.90f else 0.92f)
+    val edge = if (dark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.07f)
+    val fadeColor = scheme.background
     Box(
         modifier = Modifier
             .fillMaxWidth()
+            .drawBehind {
+                drawRect(
+                    Brush.verticalGradient(
+                        colors = listOf(fadeColor.copy(alpha = 0f), fadeColor.copy(alpha = 0.85f), fadeColor.copy(alpha = 0.95f))
+                    )
+                )
+            }
             .navigationBarsPadding()
-            .padding(horizontal = 28.dp, vertical = 8.dp)
+            .padding(horizontal = 48.dp, vertical = 10.dp)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
+                .shadow(if (dark) 0.dp else 6.dp, shape, clip = false, ambientColor = Color.Black.copy(alpha = 0.25f), spotColor = Color.Black.copy(alpha = 0.25f))
                 .clip(shape)
-                .background(
-                    Brush.verticalGradient(
-                        listOf(scheme.surface.copy(alpha = 0.80f), scheme.surface.copy(alpha = 0.60f))
-                    )
-                )
-                .border(1.dp, Brush.verticalGradient(listOf(edgeTop, edgeBottom)), shape)
+                .background(fill)
+                .border(1.dp, edge, shape)
         ) {
             content()
         }
     }
 }
+
+private val BarCorner = 20.dp
 
 @Composable
 private fun RowScope.NavPillItem(
@@ -544,7 +555,7 @@ private fun RowScope.NavPillItem(
         modifier = Modifier
             .weight(1f)
             .height(48.dp)
-            .clip(RoundedCornerShape(26.dp))
+            .clip(RoundedCornerShape(BarCorner - 5.dp))
             .background(capsule)
             .clickable(
                 onClick = onClick,
@@ -688,10 +699,10 @@ private fun BottomSelectionBar(count: Int, onFreeze: () -> Unit, onUnfreeze: () 
                 Text(stringResource(R.string.n_selected, count), style = MaterialTheme.typography.bodyMedium)
             }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = onUnfreeze, enabled = count > 0, shape = CircleShape, contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)) {
+                OutlinedButton(onClick = onUnfreeze, enabled = count > 0, shape = RoundedCornerShape(12.dp), contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)) {
                     Text(stringResource(R.string.unfreeze_selected), maxLines = 1)
                 }
-                Button(onClick = onFreeze, enabled = count > 0, shape = CircleShape, contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)) {
+                Button(onClick = onFreeze, enabled = count > 0, shape = RoundedCornerShape(12.dp), contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)) {
                     Text(stringResource(R.string.freeze_selected), maxLines = 1)
                 }
             }
