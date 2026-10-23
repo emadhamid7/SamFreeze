@@ -137,12 +137,9 @@ fun MainScreen(
     val scope = rememberCoroutineScope()
 
     var pendingFreezeConfirm by remember { mutableStateOf<AppInfo?>(null) }
-    var showSortMenu by remember { mutableStateOf(false) }
     var tab by remember { mutableStateOf(MainTab.FREEZE) }
     var quickStopQuery by remember { mutableStateOf("") }
     var quickStopFilter by remember { mutableStateOf(QuickStopFilter.USER) }
-    var quickStopSort by remember { mutableStateOf(SortOrder.NAME_ASC) }
-    var showQuickStopSortMenu by remember { mutableStateOf(false) }
     var quickStopRefreshing by remember { mutableStateOf(false) }
     val quickStopPullState = rememberPullRefreshState(
         refreshing = quickStopRefreshing,
@@ -228,57 +225,77 @@ fun MainScreen(
                 RootState.CHECKING -> LoadingBlock(stringResource(R.string.checking_root))
                 RootState.UNAVAILABLE -> RootUnavailableBlock(onRetry = { viewModel.checkRoot() })
                 RootState.AVAILABLE -> {
-                    // Search bar up top; Freeze Levels sits right next to it,
-                    // only on the Freeze tab (Quick Stop has nothing to level).
-                    Row(
-                        modifier = Modifier.fillMaxWidth().statusBarsPadding(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        SearchBar(
-                            query = if (currentTab == MainTab.FREEZE) state.query else quickStopQuery,
-                            onQueryChange = { if (currentTab == MainTab.FREEZE) viewModel.setQuery(it) else quickStopQuery = it },
-                            modifier = Modifier.weight(1f)
-                        )
-                        if (currentTab == MainTab.FREEZE) {
-                            IconButton(onClick = onOpenLevels) {
-                                Icon(Icons.Default.Layers, contentDescription = stringResource(R.string.freeze_levels))
-                            }
-                        } else {
-                            Spacer(Modifier.width(8.dp))
-                        }
-                    }
-
-                    when (currentTab) {
-                        MainTab.FREEZE -> {
+                    CollapsingHeaderLayout(
+                        modifier = Modifier.fillMaxSize(),
+                        header = {
+                            // Search bar up top; Freeze Levels sits right next to it,
+                            // only on the Freeze tab (Quick Stop has nothing to level).
                             Row(
-                                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp),
+                                modifier = Modifier.fillMaxWidth().statusBarsPadding(),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Box(modifier = Modifier.weight(1f).horizontalScroll(rememberScrollState())) {
-                                    FilterRow(selected = state.filter, onSelect = viewModel::setFilter)
-                                }
-                                Box {
-                                    IconButton(onClick = { showSortMenu = true }) {
-                                        Icon(Icons.Default.Sort, contentDescription = stringResource(R.string.sort_by))
+                                SearchBar(
+                                    query = if (currentTab == MainTab.FREEZE) state.query else quickStopQuery,
+                                    onQueryChange = { if (currentTab == MainTab.FREEZE) viewModel.setQuery(it) else quickStopQuery = it },
+                                    modifier = Modifier.weight(1f)
+                                )
+                                if (currentTab == MainTab.FREEZE) {
+                                    IconButton(onClick = onOpenLevels) {
+                                        Icon(Icons.Default.Layers, contentDescription = stringResource(R.string.freeze_levels))
                                     }
-                                    DropdownMenu(expanded = showSortMenu, onDismissRequest = { showSortMenu = false }) {
-                                        val options = listOf(
-                                            SortOrder.NAME_ASC to stringResource(R.string.sort_name_az),
-                                            SortOrder.NAME_DESC to stringResource(R.string.sort_name_za)
-                                        )
-                                        options.forEach { (order, label) ->
-                                            DropdownMenuItem(
-                                                text = { Text(label) },
-                                                onClick = { showSortMenu = false; viewModel.setSortOrder(order) }
-                                            )
-                                        }
-                                    }
+                                } else {
+                                    Spacer(Modifier.width(8.dp))
                                 }
                             }
 
+                            when (currentTab) {
+                                MainTab.FREEZE -> FilterPills(
+                                    options = listOf(
+                                        AppFilter.USER to stringResource(R.string.filter_user),
+                                        AppFilter.SYSTEM to stringResource(R.string.filter_system),
+                                        AppFilter.ALL to stringResource(R.string.filter_all),
+                                        AppFilter.FROZEN to stringResource(R.string.filter_frozen)
+                                    ),
+                                    selected = state.filter,
+                                    onSelect = viewModel::setFilter
+                                )
+                                MainTab.QUICK_STOP -> {
+                                    Text(
+                                        stringResource(R.string.quick_stop_list_desc),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 2.dp)
+                                    )
+                                    SectionCaption(
+                                        stringResource(R.string.n_in_quick_stop_list, quickStopList.size),
+                                        modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 2.dp)
+                                    )
+                                    FilterPills(
+                                        options = listOf(
+                                            QuickStopFilter.RUNNING to stringResource(R.string.filter_running),
+                                            QuickStopFilter.USER to stringResource(R.string.filter_user),
+                                            QuickStopFilter.SYSTEM to stringResource(R.string.filter_system),
+                                            QuickStopFilter.SELECTED to stringResource(R.string.filter_selected)
+                                        ),
+                                        selected = quickStopFilter,
+                                        onSelect = { quickStopFilter = it }
+                                    )
+                                }
+                                MainTab.SETTINGS -> Unit
+                            }
+                        }
+                    ) { headerState, headerHeight ->
+                        when (currentTab) {
+                            MainTab.FREEZE -> {
                             when {
-                                state.isLoading -> LoadingBlock(stringResource(R.string.loading_apps))
-                                state.visibleApps.isEmpty() -> EmptyBlock(state.query, state.filter)
+                                state.isLoading -> Box(Modifier.fillMaxSize().padding(top = headerHeight)) {
+                                    LaunchedEffect(Unit) { headerState.offsetPx = 0f }
+                                    LoadingBlock(stringResource(R.string.loading_apps))
+                                }
+                                state.visibleApps.isEmpty() -> Box(Modifier.fillMaxSize().padding(top = headerHeight)) {
+                                    LaunchedEffect(Unit) { headerState.offsetPx = 0f }
+                                    EmptyBlock(state.query, state.filter)
+                                }
                                 else -> AppList(
                                     apps = state.visibleApps,
                                     showPackageNames = showPackageNames,
@@ -287,6 +304,8 @@ fun MainScreen(
                                     selectedPackages = state.selectedPackages,
                                     sortOrder = state.sortOrder,
                                     filter = state.filter,
+                                    headerState = headerState,
+                                    headerHeight = headerHeight,
                                     onClick = { app ->
                                         if (state.selectionMode) viewModel.toggleSelected(app.packageName)
                                         else onOpenDetails(app.packageName)
@@ -304,53 +323,19 @@ fun MainScreen(
                                     }
                                 )
                             }
-                        }
-
-                        MainTab.QUICK_STOP -> {
-                            Text(
-                                stringResource(R.string.quick_stop_list_desc),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
-                            )
-                            SectionCaption(
-                                stringResource(R.string.n_in_quick_stop_list, quickStopList.size),
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
-                            )
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Box(modifier = Modifier.weight(1f).horizontalScroll(rememberScrollState())) {
-                                    QuickStopFilterRow(selected = quickStopFilter, onSelect = { quickStopFilter = it })
-                                }
-                                Box {
-                                    IconButton(onClick = { showQuickStopSortMenu = true }) {
-                                        Icon(Icons.Default.Sort, contentDescription = stringResource(R.string.sort_by))
-                                    }
-                                    DropdownMenu(expanded = showQuickStopSortMenu, onDismissRequest = { showQuickStopSortMenu = false }) {
-                                        val options = listOf(
-                                            SortOrder.NAME_ASC to stringResource(R.string.sort_name_az),
-                                            SortOrder.NAME_DESC to stringResource(R.string.sort_name_za)
-                                        )
-                                        options.forEach { (order, label) ->
-                                            DropdownMenuItem(
-                                                text = { Text(label) },
-                                                onClick = { showQuickStopSortMenu = false; quickStopSort = order }
-                                            )
-                                        }
-                                    }
-                                }
                             }
 
+                            MainTab.QUICK_STOP -> {
                             if (state.isLoading) {
-                                LoadingBlock(stringResource(R.string.loading_apps))
+                                Box(Modifier.fillMaxSize().padding(top = headerHeight)) {
+                                    LaunchedEffect(Unit) { headerState.offsetPx = 0f }
+                                    LoadingBlock(stringResource(R.string.loading_apps))
+                                }
                             } else {
                                 // Already-frozen apps have no background activity to stop,
                                 // so they're excluded from Quick Stop entirely, regardless
                                 // of which filter is selected.
-                                val filteredForStop = remember(state.apps, quickStopQuery, quickStopFilter, quickStopSort, quickStopList) {
+                                val filteredForStop = remember(state.apps, quickStopQuery, quickStopFilter, quickStopList) {
                                     var list = state.apps.filter { !it.isFrozen }
                                     list = when (quickStopFilter) {
                                         QuickStopFilter.USER -> list.filter { !it.isSystemApp }
@@ -364,10 +349,7 @@ fun MainScreen(
                                                 it.packageName.contains(quickStopQuery, ignoreCase = true)
                                         }
                                     }
-                                    when (quickStopSort) {
-                                        SortOrder.NAME_DESC -> list.sortedByDescending { it.label.lowercase() }
-                                        else -> list.sortedBy { it.label.lowercase() }
-                                    }
+                                    list.sortedBy { it.label.lowercase() }
                                 }
                                 Box(
                                     modifier = Modifier
@@ -375,7 +357,8 @@ fun MainScreen(
                                         .pullRefresh(quickStopPullState)
                                 ) {
                                     if (filteredForStop.isEmpty()) {
-                                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                        LaunchedEffect(Unit) { headerState.offsetPx = 0f }
+                                        Box(modifier = Modifier.fillMaxSize().padding(top = headerHeight), contentAlignment = Alignment.Center) {
                                             Text(
                                                 if (quickStopQuery.isNotBlank()) stringResource(R.string.no_results_for, quickStopQuery)
                                                 else stringResource(R.string.no_apps_found),
@@ -384,9 +367,12 @@ fun MainScreen(
                                             )
                                         }
                                     } else {
+                                        val qsListState = androidx.compose.foundation.lazy.rememberLazyListState()
+                                        SyncHeaderWithList(headerState, qsListState)
                                         LazyColumn(
+                                            state = qsListState,
                                             modifier = Modifier.fillMaxSize(),
-                                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                                            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = headerHeight + 4.dp, bottom = 8.dp),
                                             verticalArrangement = Arrangement.spacedBy(4.dp)
                                         ) {
                                             items(filteredForStop, key = { it.packageName }) { appInfo ->
@@ -403,14 +389,16 @@ fun MainScreen(
                                     PullRefreshIndicator(
                                         refreshing = quickStopRefreshing,
                                         state = quickStopPullState,
-                                        modifier = Modifier.align(Alignment.TopCenter),
+                                        modifier = Modifier.align(Alignment.TopCenter).padding(top = headerHeight),
                                         backgroundColor = MaterialTheme.colorScheme.surface,
                                         contentColor = MaterialTheme.colorScheme.primary
                                     )
                                 }
                             }
+                            }
+
+                            MainTab.SETTINGS -> Unit
                         }
-                        MainTab.SETTINGS -> Unit
                     }
                 }
             }
@@ -465,37 +453,28 @@ fun MainScreen(
     }
 }
 
+/** Floating, fully rounded nav pill; the active tab gets a tinted capsule behind icon + label. */
 @Composable
 private fun MainBottomNav(tab: MainTab, onTabSelected: (MainTab) -> Unit) {
-    // OneUI-style: a rounded slab anchored to the bottom instead of a flat
-    // edge-to-edge Material bar, sized a bit taller than before so icon +
-    // label actually have room to breathe.
-    Surface(
-        tonalElevation = 3.dp,
-        shadowElevation = 2.dp,
-        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
-    ) {
+    FloatingBarContainer {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .height(72.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
+            modifier = Modifier.fillMaxWidth().padding(6.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            CompactNavItem(
+            NavPillItem(
                 selected = tab == MainTab.FREEZE,
                 icon = Icons.Default.AcUnit,
                 label = stringResource(R.string.tab_freeze),
                 onClick = { onTabSelected(MainTab.FREEZE) }
             )
-            CompactNavItem(
+            NavPillItem(
                 selected = tab == MainTab.QUICK_STOP,
                 icon = Icons.Default.PowerSettingsNew,
                 label = stringResource(R.string.tab_quick_stop),
                 onClick = { onTabSelected(MainTab.QUICK_STOP) }
             )
-            CompactNavItem(
+            NavPillItem(
                 selected = tab == MainTab.SETTINGS,
                 icon = Icons.Default.Settings,
                 label = stringResource(R.string.settings),
@@ -505,8 +484,29 @@ private fun MainBottomNav(tab: MainTab, onTabSelected: (MainTab) -> Unit) {
     }
 }
 
+/** Shared floating container for the bottom nav and the selection bar. */
 @Composable
-private fun RowScope.CompactNavItem(
+private fun FloatingBarContainer(content: @Composable () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.background)
+            .navigationBarsPadding()
+            .padding(start = 16.dp, end = 16.dp, top = 6.dp, bottom = 10.dp)
+    ) {
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(36.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 3.dp,
+            shadowElevation = 8.dp,
+            content = content
+        )
+    }
+}
+
+@Composable
+private fun RowScope.NavPillItem(
     selected: Boolean,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     label: String,
@@ -517,26 +517,34 @@ private fun RowScope.CompactNavItem(
         animationSpec = tween(180),
         label = "nav_item_color"
     )
-    val iconSize by animateDpAsState(
-        targetValue = if (selected) 25.dp else 23.dp,
+    val capsule by animateColorAsState(
+        targetValue = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.16f) else Color.Transparent,
         animationSpec = tween(180),
-        label = "nav_item_icon_size"
+        label = "nav_item_capsule"
     )
     Column(
         modifier = Modifier
             .weight(1f)
-            .fillMaxHeight()
+            .height(58.dp)
+            .clip(RoundedCornerShape(30.dp))
+            .background(capsule)
             .clickable(
                 onClick = onClick,
-                indication = androidx.compose.material.ripple.rememberRipple(bounded = false, radius = 40.dp),
+                indication = null,
                 interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
             ),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(icon, contentDescription = label, tint = color, modifier = Modifier.size(iconSize))
-        Spacer(Modifier.height(3.dp))
-        Text(label, style = MaterialTheme.typography.labelSmall, color = color, maxLines = 1)
+        Icon(icon, contentDescription = label, tint = color, modifier = Modifier.size(24.dp))
+        Spacer(Modifier.height(2.dp))
+        Text(
+            label,
+            fontSize = 12.sp,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+            color = color,
+            maxLines = 1
+        )
     }
 }
 
@@ -646,50 +654,12 @@ internal fun SearchBar(query: String, onQueryChange: (String) -> Unit, modifier:
 }
 
 @Composable
-private fun FilterRow(selected: AppFilter, onSelect: (AppFilter) -> Unit) {
-    val filters = listOf(
-        AppFilter.USER to stringResource(R.string.filter_user),
-        AppFilter.SYSTEM to stringResource(R.string.filter_system),
-        AppFilter.ALL to stringResource(R.string.filter_all),
-        AppFilter.FROZEN to stringResource(R.string.filter_frozen)
-    )
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        filters.forEach { (filter, label) ->
-            FilterChip(
-                selected = selected == filter,
-                onClick = { onSelect(filter) },
-                label = { Text(label) }
-            )
-        }
-    }
-}
-
-@Composable
-private fun QuickStopFilterRow(selected: QuickStopFilter, onSelect: (QuickStopFilter) -> Unit) {
-    val filters = listOf(
-        QuickStopFilter.RUNNING to stringResource(R.string.filter_running),
-        QuickStopFilter.USER to stringResource(R.string.filter_user),
-        QuickStopFilter.SYSTEM to stringResource(R.string.filter_system),
-        QuickStopFilter.SELECTED to stringResource(R.string.filter_selected)
-    )
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        filters.forEach { (filter, label) ->
-            FilterChip(
-                selected = selected == filter,
-                onClick = { onSelect(filter) },
-                label = { Text(label) }
-            )
-        }
-    }
-}
-
-@Composable
 private fun BottomSelectionBar(count: Int, onFreeze: () -> Unit, onUnfreeze: () -> Unit, onCancel: () -> Unit) {
-    Surface(tonalElevation = 3.dp, color = MaterialTheme.colorScheme.surface) {
+    FloatingBarContainer {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 10.dp),
+                .padding(horizontal = 8.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -700,10 +670,10 @@ private fun BottomSelectionBar(count: Int, onFreeze: () -> Unit, onUnfreeze: () 
                 Text(stringResource(R.string.n_selected, count), style = MaterialTheme.typography.bodyMedium)
             }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = onUnfreeze, enabled = count > 0, contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)) {
+                OutlinedButton(onClick = onUnfreeze, enabled = count > 0, shape = CircleShape, contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)) {
                     Text(stringResource(R.string.unfreeze_selected), maxLines = 1)
                 }
-                Button(onClick = onFreeze, enabled = count > 0, contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)) {
+                Button(onClick = onFreeze, enabled = count > 0, shape = CircleShape, contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)) {
                     Text(stringResource(R.string.freeze_selected), maxLines = 1)
                 }
             }
@@ -721,11 +691,14 @@ private fun AppList(
     selectedPackages: Set<String>,
     sortOrder: SortOrder,
     filter: AppFilter,
+    headerState: CollapsingHeaderState,
+    headerHeight: androidx.compose.ui.unit.Dp,
     onClick: (AppInfo) -> Unit,
     onLongClick: (AppInfo) -> Unit,
     onToggleFreeze: (AppInfo) -> Unit
 ) {
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+    SyncHeaderWithList(headerState, listState)
 
     // Jump back to the top whenever sort order or filter changes, so a new
     // sort is immediately visible instead of leaving the scroll position
@@ -737,7 +710,7 @@ private fun AppList(
     LazyColumn(
         state = listState,
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = headerHeight + 4.dp, bottom = 8.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
         items(apps, key = { it.packageName }) { app ->

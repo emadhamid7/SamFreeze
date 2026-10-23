@@ -14,7 +14,19 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.runtime.*
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.sp
+import kotlin.math.roundToInt
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -180,4 +192,116 @@ fun SectionCaption(text: String, modifier: Modifier = Modifier) {
         color = if (MaterialTheme.colorScheme.background.luminance() < 0.5f) Color(0xFF8F8F95) else Color(0xFF6A6B71),
         modifier = modifier
     )
+}
+
+/**
+ * Quick-return header state: the header slides up as soon as the list is
+ * scrolled down and slides back in as soon as it is scrolled up again
+ * (no need to reach the top first).
+ */
+@Stable
+class CollapsingHeaderState {
+    var headerHeightPx by mutableStateOf(0f)
+    var offsetPx by mutableStateOf(0f)
+
+    val connection = object : NestedScrollConnection {
+        override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+            // Follows the finger but never consumes — the list scrolls too,
+            // so header and content stay visually in step.
+            offsetPx = (offsetPx + available.y).coerceIn(-headerHeightPx, 0f)
+            return Offset.Zero
+        }
+    }
+}
+
+/**
+ * Lays [content] (normally a LazyColumn that uses the given header height as
+ * its top contentPadding) under a [header] that hides on scroll-down and
+ * returns on scroll-up. The status-bar strip stays covered so list rows never
+ * run into the clock / icons.
+ */
+@Composable
+fun CollapsingHeaderLayout(
+    modifier: Modifier = Modifier,
+    header: @Composable ColumnScope.() -> Unit,
+    content: @Composable (state: CollapsingHeaderState, headerHeight: Dp) -> Unit
+) {
+    val state = remember { CollapsingHeaderState() }
+    val density = LocalDensity.current
+    val bg = MaterialTheme.colorScheme.background
+    Box(modifier.nestedScroll(state.connection)) {
+        content(state, with(density) { state.headerHeightPx.toDp() })
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .offset { IntOffset(0, state.offsetPx.roundToInt()) }
+                .onSizeChanged { state.headerHeightPx = it.height.toFloat() }
+                .background(bg),
+            content = header
+        )
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .windowInsetsTopHeight(WindowInsets.statusBars)
+                .background(bg)
+        )
+    }
+}
+
+/** Keeps the header visible whenever the list is at its top (or too short to scroll). */
+@Composable
+fun SyncHeaderWithList(header: CollapsingHeaderState, listState: LazyListState) {
+    val atTop by remember { derivedStateOf { !listState.canScrollBackward } }
+    LaunchedEffect(atTop) { if (atTop) header.offsetPx = 0f }
+}
+
+/** Evenly spaced One UI-style filter pills: selected = tinted accent, others = quiet surface. */
+@Composable
+fun <T> FilterPills(
+    options: List<Pair<T, String>>,
+    selected: T,
+    onSelect: (T) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        options.forEach { (value, label) ->
+            val isSelected = value == selected
+            val bg by animateColorAsState(
+                if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.16f) else MaterialTheme.colorScheme.surface,
+                tween(160), label = "pillBg"
+            )
+            val fg by animateColorAsState(
+                if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                tween(160), label = "pillFg"
+            )
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(36.dp)
+                    .clip(CircleShape)
+                    .background(bg)
+                    .selectable(
+                        selected = isSelected,
+                        role = Role.RadioButton,
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = { onSelect(value) }
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    label,
+                    color = fg,
+                    fontSize = 14.sp,
+                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
+                    maxLines = 1
+                )
+            }
+        }
+    }
 }

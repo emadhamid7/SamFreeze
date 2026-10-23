@@ -110,13 +110,11 @@ fun LevelsScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     val appsForLevel = remember(state.apps, selectedTab.level) { viewModel.appsForLevel(selectedTab.level) }
     val visible = appsForLevel
 
-    Scaffold(
-        topBar = {
-            Surface(
-                shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp),
-                color = MaterialTheme.colorScheme.surface,
-                tonalElevation = 2.dp
-            ) {
+    val navBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+
+    CollapsingHeaderLayout(
+        modifier = Modifier.fillMaxSize(),
+        header = {
                 Column(modifier = Modifier.statusBarsPadding()) {
                     Row(
                         modifier = Modifier
@@ -182,48 +180,50 @@ fun LevelsScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                         }
                     }
                 }
-            }
-        }
-    ) { padding ->
-        Column(modifier = Modifier.padding(padding).fillMaxSize()) {
+
             Text(
                 selectedTab.description,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 2.dp)
             )
-
             SectionCaption(
                 stringResource(R.string.level_apps_matched, appsForLevel.size),
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 6.dp)
             )
-
-            if (visible.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(
-                        stringResource(R.string.level_no_matches),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(32.dp)
+        }
+    ) { headerState, headerHeight ->
+        val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+        SyncHeaderWithList(headerState, listState)
+        if (visible.isEmpty()) {
+            LaunchedEffect(Unit) { headerState.offsetPx = 0f }
+            Box(
+                modifier = Modifier.fillMaxSize().padding(top = headerHeight),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    stringResource(R.string.level_no_matches),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(32.dp)
+                )
+            }
+        } else {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = headerHeight + 4.dp, bottom = 8.dp + navBottom),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                items(visible, key = { it.packageName }) { appInfo ->
+                    LevelAppRow(
+                        app = appInfo,
+                        level = selectedTab.level,
+                        showRiskDot = showRiskDots,
+                        onInfoClick = { descriptionApp = appInfo },
+                        onToggleFreeze = { viewModel.setFrozen(appInfo.packageName, it) }
                     )
                 }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    items(visible, key = { it.packageName }) { appInfo ->
-                        LevelAppRow(
-                            app = appInfo,
-                            level = selectedTab.level,
-                            showRiskDot = showRiskDots,
-                            onInfoClick = { descriptionApp = appInfo },
-                            onToggleFreeze = { viewModel.setFrozen(appInfo.packageName, it) }
-                        )
-                    }
-                    item { Spacer(Modifier.height(24.dp)) }
-                }
-
+                item { Spacer(Modifier.height(24.dp)) }
             }
         }
     }

@@ -10,6 +10,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -113,19 +114,28 @@ fun SettingsTabContent(viewModel: MainViewModel) {
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        // Samsung-style title: compact, bold, aligned with the row text.
-        Text(
-            stringResource(R.string.settings),
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .padding(start = SettingsHorizontalMargin + 16.dp, end = 28.dp, top = 16.dp, bottom = 8.dp)
-        )
-
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
+    CollapsingHeaderLayout(
+        modifier = Modifier.fillMaxSize(),
+        header = {
+            // Slim Samsung-style title; hides while scrolling, returns on scroll-up.
+            Text(
+                stringResource(R.string.settings),
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .padding(start = SettingsHorizontalMargin + 16.dp, end = 28.dp, top = 6.dp, bottom = 0.dp)
+            )
+        }
+    ) { headerState, headerHeight ->
+        val listState = rememberLazyListState()
+        SyncHeaderWithList(headerState, listState)
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(top = headerHeight, bottom = 12.dp)
+        ) {
 
             item { SectionHeader(stringResource(R.string.appearance)) }
             item {
