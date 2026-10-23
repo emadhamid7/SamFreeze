@@ -261,10 +261,22 @@ class MainViewModel(
     fun appsForLevel(level: FreezeLevel): List<AppInfo> =
         _state.value.apps.filter { it.uadInfo?.freezeLevel == level }.sortedBy { it.label.lowercase() }
 
-    /** Freezes or unfreezes a single package — used by the per-app toggle on the Freeze Levels screen. */
+    /**
+     * Freezes or unfreezes a single package — used by the per-app toggle on
+     * the Freeze Levels screen. Deliberately silent: no progress/"Batch
+     * complete" dialogs for a one-app change; failures surface via lastError.
+     */
     fun setFrozen(packageName: String, freeze: Boolean) {
-        runBatch(freeze = freeze, targets = setOf(packageName))
+        val app = _state.value.apps.firstOrNull { it.packageName == packageName } ?: return
+        if (packageRepository.isHidden(packageName)) return
+        viewModelScope.launch {
+            val result = if (freeze) packageRepository.freeze(packageName) else packageRepository.unfreeze(packageName)
+            applySingleResult(app, result)
+        }
     }
+
+    /** Freezes an explicit package set (used by backup restore). */
+    fun freezeSet(packages: Set<String>) = runBatch(freeze = true, targets = packages)
 
     private fun runBatch(freeze: Boolean, targets: Set<String>?) {
         val installed = _state.value.apps.associateBy { it.packageName }

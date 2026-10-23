@@ -291,19 +291,12 @@ fun LevelsScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         )
     }
 
-    state.batchResult?.let { (success, failed) ->
-        AlertDialog(
-            onDismissRequest = { viewModel.clearBatchResult() },
-            title = { Text(stringResource(R.string.batch_complete)) },
-            text = {
-                Column {
-                    Text(stringResource(R.string.apps_processed, success + failed))
-                    Text(stringResource(R.string.n_successful, success))
-                    Text(stringResource(R.string.n_failed, failed))
-                }
-            },
-            confirmButton = { TextButton(onClick = { viewModel.clearBatchResult() }) { Text(stringResource(R.string.ok)) } }
-        )
+    LaunchedEffect(state.lastError) {
+        state.lastError?.let { err ->
+            val reason = err.message?.lineSequence()?.firstOrNull().orEmpty()
+            android.widget.Toast.makeText(context, "${err.label}: $reason", android.widget.Toast.LENGTH_SHORT).show()
+            viewModel.clearError()
+        }
     }
 }
 
@@ -393,7 +386,7 @@ private fun LevelAppRow(
                 )
             }
             Spacer(Modifier.width(8.dp))
-            Switch(
+            SamsungSwitch(
                 checked = app.state == AppState.FROZEN,
                 onCheckedChange = onToggleFreeze
             )

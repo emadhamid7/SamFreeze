@@ -163,9 +163,9 @@
     <string name="widget_list_empty">Quick Stop list is empty. Add apps in Settings</string>
     <string name="widget_no_root">Root not available</string>
     <string name="backup_export">Export settings backup</string>
-    <string name="backup_export_desc">Saves settings and selected apps as a json file</string>
+    <string name="backup_export_desc">Saves your frozen apps and Quick Stop list as a JSON file</string>
     <string name="backup_import">Import settings backup</string>
-    <string name="backup_import_desc">Restore from a previously exported JSON file.</string>
+    <string name="backup_import_desc">Re-freezes your backed-up apps and restores your Quick Stop list.</string>
     <string name="import_success">Restored %1$d item(s).</string>
     <string name="import_failed">Could not read that backup file.</string>
 
@@ -180,4 +180,10 @@
     <string name="cache_clear_failed">Couldn\'t clear cache, check root access.</string>
     <string name="auto_clear_cache">Auto-clear cache</string>
     <string name="auto_clear_interval">Frequency</string>
+    <string name="dark_mode_settings">Dark mode settings</string>
+    <string name="follow_system_theme">Follow system setting</string>
+    <string name="follow_system_theme_desc">Switch between light and dark automatically with your device.</string>
+    <string name="backup_not_ready">Wait for the app list to finish loading (root required).</string>
+    <string name="backup_saved">Backup saved: %1$d frozen, %2$d in Quick Stop.</string>
+    <string name="backup_write_failed">Could not write the backup file.</string>
 </resources>

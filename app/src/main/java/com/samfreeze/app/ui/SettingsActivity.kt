@@ -8,6 +8,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -24,7 +25,11 @@ import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.samfreeze.app.R
 import com.samfreeze.app.SamFreezeApp
+import com.samfreeze.app.model.AppState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -59,19 +64,33 @@ fun SettingsTabContent(viewModel: MainViewModel) {
     val confirmBeforeFreeze by prefs.confirmBeforeFreeze.collectAsStateWithLifecycle(initialValue = false)
     val refreshOnResume by prefs.refreshOnResume.collectAsStateWithLifecycle(initialValue = true)
     val advancedUninstallEnabled by prefs.advancedUninstallEnabled.collectAsStateWithLifecycle(initialValue = false)
-    val favorites by prefs.favorites.collectAsStateWithLifecycle(initialValue = emptySet())
+    val systemDark = isSystemInDarkTheme()
 
     var importStatus by remember { mutableStateOf<String?>(null) }
     var confirmUnfreezeAll by remember { mutableStateOf(false) }
     var showCreditsDialog by remember { mutableStateOf(false) }
+    var showDarkSettings by remember { mutableStateOf(false) }
 
     val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         if (uri != null) {
             scope.launch {
-                val json = buildBackupJson(favorites, theme, showPackageNames, showRiskDots, confirmBeforeFreeze, refreshOnResume, advancedUninstallEnabled)
-                try {
-                    context.contentResolver.openOutputStream(uri)?.use { it.write(json.toByteArray()) }
-                } catch (t: Throwable) { /* silent — SAF write failures aren't actionable here */ }
+                val frozen = viewModel.state.value.apps
+                    .filter { it.state == AppState.FROZEN }
+                    .map { it.packageName }
+                    .toSet()
+                val quickStop = prefs.quickStopList.first()
+                val json = buildBackupJson(frozen, quickStop)
+                val ok = try {
+                    withContext(Dispatchers.IO) {
+                        context.contentResolver.openOutputStream(uri, "wt")?.use { it.write(json.toByteArray()) } != null
+                    }
+                } catch (t: Throwable) { false }
+                android.widget.Toast.makeText(
+                    context,
+                    if (ok) context.getString(R.string.backup_saved, frozen.size, quickStop.size)
+                    else context.getString(R.string.backup_write_failed),
+                    android.widget.Toast.LENGTH_LONG
+                ).show()
             }
         }
     }
@@ -80,10 +99,13 @@ fun SettingsTabContent(viewModel: MainViewModel) {
         if (uri != null) {
             scope.launch {
                 try {
-                    val text = context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+                    val text = withContext(Dispatchers.IO) {
+                        context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+                    }
                     if (text != null) {
-                        val applied = applyBackupJson(text, context, prefs)
-                        importStatus = context.getString(R.string.import_success, applied)
+                        val applied = applyBackupJson(text, viewModel, prefs)
+                        importStatus = if (applied < 0) context.getString(R.string.import_failed)
+                                       else context.getString(R.string.import_success, applied)
                     }
                 } catch (t: Throwable) {
                     importStatus = context.getString(R.string.import_failed)
@@ -122,7 +144,21 @@ fun SettingsTabContent(viewModel: MainViewModel) {
             item { SectionHeader(stringResource(R.string.appearance)) }
             item {
                 SettingsGroup {
-                    ThemeSelector(selected = theme, onSelect = { scope.launch { prefs.setTheme(it) } })
+                    val effectiveDark = when (theme) { "dark" -> true; "light" -> false; else -> systemDark }
+                    SamsungThemeSelector(
+                        isDark = effectiveDark,
+                        onSelect = { dark -> scope.launch { prefs.setTheme(if (dark) "dark" else "light") } },
+                        lightLabel = stringResource(R.string.theme_light),
+                        darkLabel = stringResource(R.string.theme_dark)
+                    )
+                    GroupDivider()
+                    ListItem(
+                        headlineContent = { Text(stringResource(R.string.dark_mode_settings)) },
+                        colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+                        modifier = Modifier
+                            .defaultMinSize(minHeight = SettingsRowMinHeight)
+                            .clickable { showDarkSettings = true }
+                    )
                 }
             }
 
@@ -169,7 +205,11 @@ fun SettingsTabContent(viewModel: MainViewModel) {
                         colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
                         modifier = Modifier
                             .defaultMinSize(minHeight = SettingsRowMinHeight)
-                            .clickable { exportLauncher.launch("samfreeze-backup.json") }
+                            .clickable {
+                                if (state.isLoading || state.rootState != RootState.AVAILABLE) {
+                                    android.widget.Toast.makeText(context, context.getString(R.string.backup_not_ready), android.widget.Toast.LENGTH_SHORT).show()
+                                } else exportLauncher.launch("samfreeze-backup.json")
+                            }
                     )
                     GroupDivider()
                     ListItem(
@@ -178,7 +218,11 @@ fun SettingsTabContent(viewModel: MainViewModel) {
                         colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
                         modifier = Modifier
                             .defaultMinSize(minHeight = SettingsRowMinHeight)
-                            .clickable { importLauncher.launch(arrayOf("application/json")) }
+                            .clickable {
+                                if (state.isLoading || state.rootState != RootState.AVAILABLE) {
+                                    android.widget.Toast.makeText(context, context.getString(R.string.backup_not_ready), android.widget.Toast.LENGTH_SHORT).show()
+                                } else importLauncher.launch(arrayOf("application/json", "text/plain", "application/octet-stream"))
+                            }
                     )
                 }
             }
@@ -319,6 +363,37 @@ fun SettingsTabContent(viewModel: MainViewModel) {
         )
     }
 
+    if (showDarkSettings) {
+        Dialog(onDismissRequest = { showDarkSettings = false }) {
+            Surface(shape = RoundedCornerShape(28.dp), color = MaterialTheme.colorScheme.surface) {
+                Column(modifier = Modifier.padding(vertical = 20.dp)) {
+                    Text(
+                        stringResource(R.string.dark_mode_settings),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp)
+                    )
+                    ListItem(
+                        headlineContent = { Text(stringResource(R.string.follow_system_theme)) },
+                        supportingContent = { Text(stringResource(R.string.follow_system_theme_desc)) },
+                        trailingContent = {
+                            SamsungSwitch(
+                                checked = theme == "system",
+                                onCheckedChange = { on ->
+                                    scope.launch { prefs.setTheme(if (on) "system" else if (systemDark) "dark" else "light") }
+                                }
+                            )
+                        },
+                        colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent)
+                    )
+                    Row(modifier = Modifier.fillMaxWidth().padding(end = 16.dp), horizontalArrangement = Arrangement.End) {
+                        TextButton(onClick = { showDarkSettings = false }) { Text(stringResource(R.string.ok)) }
+                    }
+                }
+            }
+        }
+    }
+
     if (showCreditsDialog) {
         Dialog(onDismissRequest = { showCreditsDialog = false }) {
             Surface(
@@ -415,86 +490,56 @@ private fun SectionHeader(text: String) {
 }
 
 @Composable
-private fun ThemeSelector(selected: String, onSelect: (String) -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        listOf("system" to stringResource(R.string.theme_system),
-               "light" to stringResource(R.string.theme_light),
-               "dark" to stringResource(R.string.theme_dark)).forEach { (value, label) ->
-            FilterChip(selected = selected == value, onClick = { onSelect(value) }, label = { Text(label) })
-        }
-    }
-}
-
-@Composable
 private fun SwitchRow(title: String, subtitle: String? = null, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
     ListItem(
         headlineContent = { Text(title) },
         supportingContent = subtitle?.let { { Text(it) } },
-        trailingContent = { Switch(checked = checked, onCheckedChange = onCheckedChange) },
+        trailingContent = { SamsungSwitch(checked = checked, onCheckedChange = onCheckedChange) },
         colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
         modifier = Modifier.defaultMinSize(minHeight = SettingsRowMinHeight)
     )
 }
 
-private fun buildBackupJson(
-    favorites: Set<String>,
-    theme: String,
-    showPackageNames: Boolean,
-    showRiskDots: Boolean,
-    confirmBeforeFreeze: Boolean,
-    refreshOnResume: Boolean,
-    advancedUninstallEnabled: Boolean
-): String {
+private fun buildBackupJson(frozen: Set<String>, quickStop: Set<String>): String {
     val root = JSONObject()
-    root.put("favorites", JSONArray(favorites.toList()))
-    val settings = JSONObject()
-    settings.put("theme", theme)
-    settings.put("showPackageNames", showPackageNames)
-    settings.put("showRiskDots", showRiskDots)
-    settings.put("confirmBeforeFreeze", confirmBeforeFreeze)
-    settings.put("refreshOnResume", refreshOnResume)
-    settings.put("advancedUninstallEnabled", advancedUninstallEnabled)
-    root.put("settings", settings)
+    root.put("version", 2)
+    root.put("frozenApps", JSONArray(frozen.sorted()))
+    root.put("quickStopList", JSONArray(quickStop.sorted()))
     return root.toString(2)
 }
 
-/** Applies an exported backup, verifying package existence before restoring lists. Returns applied-item count. */
+/**
+ * Restores a backup: merges the Quick Stop list (installed apps only) and
+ * re-freezes backed-up apps that are installed but currently active.
+ * Returns the number of restored items, or -1 if the file isn't a valid backup.
+ */
 private suspend fun applyBackupJson(
     text: String,
-    context: Context,
+    viewModel: MainViewModel,
     prefs: com.samfreeze.app.data.PreferencesRepository
 ): Int {
     val root = JSONObject(text)
-    val pm = context.packageManager
-    var applied = 0
+    val frozenArr = root.optJSONArray("frozenApps")
+    val quickArr = root.optJSONArray("quickStopList")
+    if (frozenArr == null && quickArr == null) return -1
 
-    fun installedOnly(arr: JSONArray?): Set<String> {
+    val installed = viewModel.state.value.apps.associateBy { it.packageName }
+
+    fun toSet(arr: JSONArray?): Set<String> {
         if (arr == null) return emptySet()
         val out = mutableSetOf<String>()
         for (i in 0 until arr.length()) {
             val pkg = arr.optString(i, "")
-            if (pkg.isBlank()) continue
-            val exists = try { pm.getApplicationInfo(pkg, 0); true } catch (t: Throwable) { false }
-            if (exists) out.add(pkg)
+            if (pkg.isNotBlank() && pkg in installed) out.add(pkg)
         }
         return out
     }
 
-    val favorites = installedOnly(root.optJSONArray("favorites"))
-    prefs.setFavorites(favorites)
-    applied += favorites.size
+    val quick = toSet(quickArr)
+    if (quick.isNotEmpty()) prefs.setQuickStopList(prefs.quickStopList.first() + quick)
 
-    root.optJSONObject("settings")?.let { settings ->
-        if (settings.has("theme")) { prefs.setTheme(settings.getString("theme")); applied++ }
-        if (settings.has("showPackageNames")) { prefs.setShowPackageNames(settings.getBoolean("showPackageNames")); applied++ }
-        if (settings.has("showRiskDots")) { prefs.setShowRiskDots(settings.getBoolean("showRiskDots")); applied++ }
-        if (settings.has("confirmBeforeFreeze")) { prefs.setConfirmBeforeFreeze(settings.getBoolean("confirmBeforeFreeze")); applied++ }
-        if (settings.has("refreshOnResume")) { prefs.setRefreshOnResume(settings.getBoolean("refreshOnResume")); applied++ }
-        if (settings.has("advancedUninstallEnabled")) { prefs.setAdvancedUninstallEnabled(settings.getBoolean("advancedUninstallEnabled")); applied++ }
-    }
+    val toFreeze = toSet(frozenArr).filter { installed[it]?.state != AppState.FROZEN }.toSet()
+    if (toFreeze.isNotEmpty()) viewModel.freezeSet(toFreeze)
 
-    return applied
+    return quick.size + toFreeze.size
 }

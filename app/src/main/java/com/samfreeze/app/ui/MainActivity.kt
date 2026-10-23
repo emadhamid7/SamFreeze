@@ -803,10 +803,9 @@ private fun AppRow(
                 // Toggle ON = frozen (disabled), toggle OFF = active/unfrozen.
                 // Scaled down a touch to free up horizontal room for the
                 // package name now that the source label row is gone.
-                Switch(
+                SamsungSwitch(
                     checked = app.state == AppState.FROZEN,
-                    onCheckedChange = { onToggleFreeze() },
-                    modifier = Modifier.scale(0.85f)
+                    onCheckedChange = { onToggleFreeze() }
                 )
             }
         }
