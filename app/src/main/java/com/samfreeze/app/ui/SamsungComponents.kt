@@ -33,6 +33,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.material3.Surface
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.semantics.Role
@@ -229,6 +233,8 @@ fun CollapsingHeaderLayout(
     val state = remember { CollapsingHeaderState() }
     val density = LocalDensity.current
     val bg = MaterialTheme.colorScheme.background
+    val primary = MaterialTheme.colorScheme.primary
+    val dark = bg.luminance() < 0.5f
     Box(modifier.nestedScroll(state.connection)) {
         content(state, with(density) { state.headerHeightPx.toDp() })
         Column(
@@ -236,14 +242,22 @@ fun CollapsingHeaderLayout(
                 .fillMaxWidth()
                 .offset { IntOffset(0, state.offsetPx.roundToInt()) }
                 .onSizeChanged { state.headerHeightPx = it.height.toFloat() }
-                .background(bg),
+                // Same colour + same top glow as the wallpaper, so the header
+                // is seamless against it while still hiding rows scrolling under.
+                .drawBehind {
+                    drawRect(bg)
+                    drawTopGlow(primary, dark, -state.offsetPx)
+                },
             content = header
         )
         Box(
             Modifier
                 .fillMaxWidth()
                 .windowInsetsTopHeight(WindowInsets.statusBars)
-                .background(bg)
+                .drawBehind {
+                    drawRect(bg)
+                    drawTopGlow(primary, dark, 0f)
+                }
         )
     }
 }
@@ -303,5 +317,51 @@ fun <T> FilterPills(
                 )
             }
         }
+    }
+}
+
+/** Extra list padding so the last rows can scroll clear of the floating bottom bar. */
+val FloatingBarClearance = 84.dp
+
+/** Soft accent glow near the top edge; [originY] shifts it when drawn inside a moving header. */
+fun DrawScope.drawTopGlow(color: Color, dark: Boolean, originY: Float) {
+    drawRect(
+        brush = Brush.radialGradient(
+            colors = listOf(color.copy(alpha = if (dark) 0.10f else 0.07f), color.copy(alpha = 0f)),
+            center = Offset(size.width * 0.85f, originY + 90.dp.toPx()),
+            radius = size.width * 0.95f
+        )
+    )
+}
+
+/**
+ * App-wide faint "wallpaper": base background plus two very soft accent glows
+ * (top-right, bottom-left). Deliberately subtle.
+ */
+@Composable
+fun AppBackdrop(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    val bg = MaterialTheme.colorScheme.background
+    val primary = MaterialTheme.colorScheme.primary
+    val dark = bg.luminance() < 0.5f
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .drawBehind {
+                drawRect(bg)
+                drawTopGlow(primary, dark, 0f)
+                drawRect(
+                    brush = Brush.radialGradient(
+                        colors = listOf(primary.copy(alpha = if (dark) 0.07f else 0.05f), primary.copy(alpha = 0f)),
+                        center = Offset(size.width * 0.05f, size.height * 0.95f),
+                        radius = size.width * 1.0f
+                    )
+                )
+            }
+    ) {
+        Surface(
+            color = Color.Transparent,
+            contentColor = MaterialTheme.colorScheme.onBackground,
+            content = content
+        )
     }
 }

@@ -57,7 +57,7 @@ class LevelsActivity : ComponentActivity() {
             val appCtx = application as SamFreezeApp
             val appTheme = com.samfreeze.app.ui.theme.rememberAppTheme(appCtx.preferencesRepository)
             SamFreezeTheme(appTheme = appTheme) {
-                Surface(color = MaterialTheme.colorScheme.background) {
+                AppBackdrop {
                     LevelsScreen(viewModel = viewModel, onBack = { finish() })
                 }
             }

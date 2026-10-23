@@ -54,6 +54,8 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.foundation.border
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalFocusManager
@@ -89,7 +91,7 @@ class MainActivity : ComponentActivity() {
             val app = application as SamFreezeApp
             val appTheme = com.samfreeze.app.ui.theme.rememberAppTheme(app.preferencesRepository)
             SamFreezeTheme(appTheme = appTheme) {
-                Surface(color = MaterialTheme.colorScheme.background) {
+                AppBackdrop {
                     MainScreen(viewModel = viewModel, onOpenLevels = {
                         startActivity(Intent(this, LevelsActivity::class.java))
                     }, onOpenDetails = { pkg ->
@@ -154,43 +156,14 @@ fun MainScreen(
     var confirmForceStopList by remember { mutableStateOf(false) }
 
     Scaffold(
-        // The top header rows (search bar / Settings logo row) already apply
-        // statusBarsPadding() themselves, and the bottom nav applies
-        // navigationBarsPadding(). Scaffold's default contentWindowInsets
-        // would add the status bar inset a second time, pushing the top bar
-        // down — so zero it out here.
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        bottomBar = {
-            AnimatedContent(
-                targetState = state.selectionMode && tab == MainTab.FREEZE,
-                transitionSpec = { fadeIn(tween(180)) togetherWith fadeOut(tween(120)) },
-                label = "bottom_bar"
-            ) { showSelectionBar ->
-                if (showSelectionBar) {
-                    BottomSelectionBar(
-                        count = state.selectedPackages.size,
-                        onFreeze = { viewModel.freezeSelected() },
-                        onUnfreeze = { viewModel.unfreezeSelected() },
-                        onCancel = { viewModel.clearSelection() }
-                    )
-                } else {
-                    MainBottomNav(tab = tab, onTabSelected = { tab = it })
-                }
-            }
-        },
-        floatingActionButton = {
-            if (tab == MainTab.QUICK_STOP && !state.selectionMode) {
-                ExtendedFloatingActionButton(
-                    onClick = { confirmForceStopList = true },
-                    icon = { Icon(Icons.Default.PowerSettingsNew, contentDescription = null) },
-                    text = { Text(stringResource(R.string.force_stop_list)) },
-                    containerColor = MaterialTheme.colorScheme.errorContainer,
-                    contentColor = MaterialTheme.colorScheme.onErrorContainer
-                )
-            }
-        }
+        // Header rows apply statusBarsPadding() themselves and the floating bar
+        // applies navigationBarsPadding(), so Scaffold adds no insets. The bottom
+        // bar + FAB are overlaid (not Scaffold slots) so lists scroll beneath them.
+        containerColor = Color.Transparent,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { padding ->
-        Column(modifier = Modifier.padding(padding).fillMaxSize()) {
+        Box(modifier = Modifier.padding(padding).fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize()) {
             AnimatedContent(
                 targetState = tab,
                 transitionSpec = {
@@ -372,7 +345,7 @@ fun MainScreen(
                                         LazyColumn(
                                             state = qsListState,
                                             modifier = Modifier.fillMaxSize(),
-                                            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = headerHeight + 4.dp, bottom = 8.dp),
+                                            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = headerHeight + 4.dp, bottom = FloatingBarClearance + 64.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()),
                                             verticalArrangement = Arrangement.spacedBy(4.dp)
                                         ) {
                                             items(filteredForStop, key = { it.packageName }) { appInfo ->
@@ -405,6 +378,38 @@ fun MainScreen(
             }
             }
             }
+        }
+        Column(
+            modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth(),
+            horizontalAlignment = Alignment.End
+        ) {
+            if (tab == MainTab.QUICK_STOP && !state.selectionMode) {
+                ExtendedFloatingActionButton(
+                    onClick = { confirmForceStopList = true },
+                    icon = { Icon(Icons.Default.PowerSettingsNew, contentDescription = null) },
+                    text = { Text(stringResource(R.string.force_stop_list)) },
+                    modifier = Modifier.padding(end = 16.dp, bottom = 4.dp),
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                )
+            }
+            AnimatedContent(
+                targetState = state.selectionMode && tab == MainTab.FREEZE,
+                transitionSpec = { fadeIn(tween(180)) togetherWith fadeOut(tween(120)) },
+                label = "bottom_bar"
+            ) { showSelectionBar ->
+                if (showSelectionBar) {
+                    BottomSelectionBar(
+                        count = state.selectedPackages.size,
+                        onFreeze = { viewModel.freezeSelected() },
+                        onUnfreeze = { viewModel.unfreezeSelected() },
+                        onCancel = { viewModel.clearSelection() }
+                    )
+                } else {
+                    MainBottomNav(tab = tab, onTabSelected = { tab = it })
+                }
+            }
+        }
         }
     }
 
@@ -458,7 +463,7 @@ fun MainScreen(
 private fun MainBottomNav(tab: MainTab, onTabSelected: (MainTab) -> Unit) {
     FloatingBarContainer {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(6.dp),
+            modifier = Modifier.fillMaxWidth().padding(5.dp),
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -484,24 +489,37 @@ private fun MainBottomNav(tab: MainTab, onTabSelected: (MainTab) -> Unit) {
     }
 }
 
-/** Shared floating container for the bottom nav and the selection bar. */
+/**
+ * Shared floating "glass" container for the bottom nav and selection bar:
+ * translucent gradient fill + hairline highlight edge, floating with margins.
+ * (Fake glass — content isn't blurred, only see-through.)
+ */
 @Composable
 private fun FloatingBarContainer(content: @Composable () -> Unit) {
+    val scheme = MaterialTheme.colorScheme
+    val dark = scheme.background.luminance() < 0.5f
+    val shape = RoundedCornerShape(32.dp)
+    val edgeTop = if (dark) Color.White.copy(alpha = 0.20f) else Color.Black.copy(alpha = 0.10f)
+    val edgeBottom = if (dark) Color.White.copy(alpha = 0.04f) else Color.Black.copy(alpha = 0.03f)
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.background)
             .navigationBarsPadding()
-            .padding(start = 16.dp, end = 16.dp, top = 6.dp, bottom = 10.dp)
+            .padding(horizontal = 28.dp, vertical = 8.dp)
     ) {
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(36.dp),
-            color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 3.dp,
-            shadowElevation = 8.dp,
-            content = content
-        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(shape)
+                .background(
+                    Brush.verticalGradient(
+                        listOf(scheme.surface.copy(alpha = 0.80f), scheme.surface.copy(alpha = 0.60f))
+                    )
+                )
+                .border(1.dp, Brush.verticalGradient(listOf(edgeTop, edgeBottom)), shape)
+        ) {
+            content()
+        }
     }
 }
 
@@ -525,8 +543,8 @@ private fun RowScope.NavPillItem(
     Column(
         modifier = Modifier
             .weight(1f)
-            .height(58.dp)
-            .clip(RoundedCornerShape(30.dp))
+            .height(48.dp)
+            .clip(RoundedCornerShape(26.dp))
             .background(capsule)
             .clickable(
                 onClick = onClick,
@@ -536,11 +554,11 @@ private fun RowScope.NavPillItem(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(icon, contentDescription = label, tint = color, modifier = Modifier.size(24.dp))
-        Spacer(Modifier.height(2.dp))
+        Icon(icon, contentDescription = label, tint = color, modifier = Modifier.size(22.dp))
+        Spacer(Modifier.height(1.dp))
         Text(
             label,
-            fontSize = 12.sp,
+            fontSize = 11.sp,
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
             color = color,
             maxLines = 1
@@ -710,7 +728,7 @@ private fun AppList(
     LazyColumn(
         state = listState,
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = headerHeight + 4.dp, bottom = 8.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = headerHeight + 4.dp, bottom = FloatingBarClearance + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()),
         verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
         items(apps, key = { it.packageName }) { app ->

@@ -134,7 +134,7 @@ fun SettingsTabContent(viewModel: MainViewModel) {
         LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(top = headerHeight, bottom = 12.dp)
+            contentPadding = PaddingValues(top = headerHeight, bottom = FloatingBarClearance + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding())
         ) {
 
             item { SectionHeader(stringResource(R.string.appearance)) }
@@ -187,30 +187,6 @@ fun SettingsTabContent(viewModel: MainViewModel) {
                 }
             }
 
-            item { SectionHeader(stringResource(R.string.advanced_and_bulk)) }
-            item {
-                SettingsGroup {
-                    SwitchRow(
-                        title = stringResource(R.string.enable_uninstall_option),
-                        checked = advancedUninstallEnabled,
-                        onCheckedChange = { scope.launch { prefs.setAdvancedUninstallEnabled(it) } }
-                    )
-                    GroupDivider()
-                    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
-                        Button(
-                            onClick = { confirmUnfreezeAll = true },
-                            modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 48.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.errorContainer,
-                                contentColor = MaterialTheme.colorScheme.onErrorContainer
-                            )
-                        ) {
-                            Text(stringResource(R.string.unfreeze_all))
-                        }
-                    }
-                }
-            }
-
             item { SectionHeader(stringResource(R.string.backup_settings)) }
             item {
                 SettingsGroup {
@@ -239,6 +215,30 @@ fun SettingsTabContent(viewModel: MainViewModel) {
                                 } else importLauncher.launch(arrayOf("application/json", "text/plain", "application/octet-stream"))
                             }
                     )
+                }
+            }
+
+            item { SectionHeader(stringResource(R.string.advanced_and_bulk)) }
+            item {
+                SettingsGroup {
+                    SwitchRow(
+                        title = stringResource(R.string.enable_uninstall_option),
+                        checked = advancedUninstallEnabled,
+                        onCheckedChange = { scope.launch { prefs.setAdvancedUninstallEnabled(it) } }
+                    )
+                    GroupDivider()
+                    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+                        Button(
+                            onClick = { confirmUnfreezeAll = true },
+                            modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 48.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer,
+                                contentColor = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                        ) {
+                            Text(stringResource(R.string.unfreeze_all))
+                        }
+                    }
                 }
             }
 
